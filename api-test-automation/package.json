@@ -1,0 +1,24 @@
+{
+  "name": "api-test-automation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test-ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "Alexander Vegazo",
+  "license": "ISC",
+  "description": "API Test Automation Framework for Petstore Swagger",
+  "devDependencies": {
+    "@faker-js/faker": "^8.0.0",
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.1",
+    "dotenv": "^16.0.0"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.0"
+  }
+}
