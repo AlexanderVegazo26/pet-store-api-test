@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
 import { PetApi } from "../src/api/petApi";
 import { DataGenerator } from "../src/helpers/dataGenerator";
-import { Pet } from "../src/types/pet.types";
-import { XMLParser } from "fast-xml-parser";
+import { ApiErrorResponse, Pet, PetListResponse } from "../src/types/pet.types";
 import { XmlHelper } from "../src/helpers/xmlhelper";
+import { PetStatus } from "../src/enums/pet.enum";
 
-test.describe("Pet store API Tests", () => {
+test.describe("Pet store API positive Tests", () => {
   let petApi: PetApi;
 
   test.beforeEach(async ({ request }) => {
@@ -13,31 +13,118 @@ test.describe("Pet store API Tests", () => {
   });
 
   test("should create a new pet", async () => {
-    const newPet: Pet = DataGenerator.generatePet();
-    const response = await petApi.createPet(newPet);
+    const pet: Pet = DataGenerator.generatePet();
+    const createPetResponse = await petApi.createPet(pet);
 
-    expect(response.status()).toBe(200);
-    const parsedXmlResponse = await XmlHelper.parseXmlResponse<{ Pet: Pet }>(
-      response
-    );
+    expect(createPetResponse.status()).toBe(200); //bug: It should be 201 for post creation
+    const createPetResponseParsed = (
+      await XmlHelper.parseXmlResponse<{
+        Pet: Pet;
+      }>(createPetResponse)
+    ).Pet;
 
-    expect(parsedXmlResponse.Pet).toMatchObject({
-      id: newPet.id,
-      name: newPet.name,
+    expect(createPetResponseParsed).toMatchObject({
+      id: pet.id,
+      name: pet.name,
       category: {
-        id: newPet.category?.id,
-        name: newPet.category?.name,
+        id: pet.category?.id,
+        name: pet.category?.name,
       },
       photoUrls: {
-        photoUrl: newPet.photoUrls[0],
+        photoUrl: pet.photoUrls[0],
       },
       tags: {
         tag: {
-          id: newPet.tags?.[0].id,
-          name: newPet.tags?.[0].name,
+          id: pet.tags?.[0].id,
+          name: pet.tags?.[0].name,
         },
       },
-      status: newPet.status,
+      status: pet.status,
     });
+  });
+
+  test("should update an existing pet", async () => {
+    const pet: Pet = DataGenerator.generatePet();
+    await petApi.createPet(pet);
+
+    const updatedPet: Pet = {
+      ...pet,
+      name: "Updated " + pet.name,
+      status: PetStatus.SOLD,
+    };
+
+    const updateResponse = await petApi.updatePet(updatedPet);
+    expect(updateResponse.status()).toBe(200);
+
+    const getPetResponse = await petApi.getPetById(pet.id);
+    const getPetResponseParsed = (
+      await XmlHelper.parseXmlResponse<{
+        Pet: Pet;
+      }>(getPetResponse)
+    ).Pet;
+
+    expect(getPetResponseParsed).toMatchObject({
+      id: updatedPet.id,
+      name: updatedPet.name,
+      status: updatedPet.status,
+    });
+  });
+
+  test("should delete an existing pet", async () => {
+    const pet: Pet = DataGenerator.generatePet();
+    await petApi.createPet(pet);
+
+    const getPetResponse = await petApi.getPetById(pet.id);
+    expect(getPetResponse.status()).toBe(200);
+
+    const deleteResponse = await petApi.deletePet(pet.id);
+    expect(deleteResponse.status()).toBe(200);
+
+    const getPetAfterDeleteResponse = await petApi.getPetById(pet.id);
+    expect(getPetAfterDeleteResponse.status()).toBe(404);
+  });
+
+  test("should find pets by status", async () => {
+    const pet: Pet = DataGenerator.generatePet();
+    await petApi.createPet(pet);
+
+    const getPetByStatusResponse = await petApi.getPetByStatus(
+      PetStatus.AVAILABLE
+    );
+    expect(getPetByStatusResponse.status()).toBe(200);
+
+    const getPetByStatusResponseParsed = (
+      await XmlHelper.parseXmlResponse<PetListResponse>(getPetByStatusResponse)
+    ).ArrayList.item;
+
+    expect(getPetByStatusResponseParsed).toContainEqual(
+      expect.objectContaining({
+        id: pet.id,
+        status: PetStatus.AVAILABLE,
+      })
+    );
+  });
+
+  test("should handle invalid pet creation", async () => {
+    const invalidPet = {} as Pet;
+    const createResponse = await petApi.createPet(invalidPet);
+    expect(createResponse.status()).toBe(500); //bug it should be a 400
+  });
+
+  test("should upload pet image", async () => {
+    const pet: Pet = DataGenerator.generatePet();
+    await petApi.createPet(pet);
+
+    const imageBuffer = Buffer.from("fake-image-data");
+    const uploadResponse = await petApi.uploadPetImage(pet.id, imageBuffer);
+
+    expect(uploadResponse.status()).toBe(200);
+  });
+
+  test("should fail when getting pet with invalid ID", async () => {
+    const invalidPetId = 998952;
+    const getPetResponse = await petApi.getPetById(invalidPetId);
+
+    expect(getPetResponse.status()).toBe(404);
   });
 });

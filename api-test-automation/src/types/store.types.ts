@@ -21,3 +21,11 @@ export interface Customer {
   username: string;
   address: Address[];
 }
+
+export interface InventoryResponse {
+  HashMap: {
+    approved: number;
+    placed: number;
+    delivered: number;
+  };
+}

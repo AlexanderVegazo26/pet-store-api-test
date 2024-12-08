@@ -1,7 +1,7 @@
 import { PetStatus } from "../enums/pet.enum";
 
 export interface Pet {
-  id?: number;
+  id: number;
   name: string;
   category?: Category;
   photoUrls: string[];
@@ -17,4 +17,20 @@ export interface Category {
 export interface tag {
   id: number;
   name: string;
+}
+
+
+export interface PetListResponse {
+  ArrayList: {
+    item: Pet[];
+  };
+}
+
+export interface ApiError {
+  code: number;
+  message: string;
+}
+
+export interface ApiErrorResponse {
+  ApiError: ApiError;
 }
