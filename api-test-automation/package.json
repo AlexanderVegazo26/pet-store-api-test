@@ -1,7 +1,6 @@
 {
   "name": "api-test-automation",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
     "test": "playwright test",
     "test-ui": "playwright test --ui",
@@ -16,9 +15,7 @@
     "@faker-js/faker": "^8.0.0",
     "@playwright/test": "^1.49.0",
     "@types/node": "^22.10.1",
-    "dotenv": "^16.0.0"
-  },
-  "dependencies": {
+    "dotenv": "^16.0.0",
     "fast-xml-parser": "^4.5.0"
   }
 }
