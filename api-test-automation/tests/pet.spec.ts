@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { PetApi } from "../src/api/petApi";
 import { DataGenerator } from "../src/helpers/dataGenerator";
-import { ApiErrorResponse, Pet, PetListResponse } from "../src/types/pet.types";
+import { Pet, PetListResponse } from "../src/types/pet.types";
 import { XmlHelper } from "../src/helpers/xmlhelper";
 import { PetStatus } from "../src/enums/pet.enum";
 

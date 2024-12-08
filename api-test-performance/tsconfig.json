@@ -2,16 +2,28 @@
   "compilerOptions": {
     "baseUrl": "./",
     "outDir": "target",
+    "paths": {
+      "@test/*": ["src/test/*"],
+      "@scenarios/*": ["src/scenarios/*"],
+      "@utils/*": ["src/utils/*"],
+      "@types/*": ["src/utils/types/*"],
+      "@config/*": ["src/utils/config/*"],
+      "@data/*": ["src/utils/data/*"],
+      "@helpers/*": ["src/utils/helpers/*"],
+      "@enums/*": ["src/utils/enums/*"]
+    },
     "lib": ["es2021", "dom"],
     "target": "es2021",
-//    "module": "node16",
-//    "moduleResolution": "node16",
     "module": "ES2020",
     "moduleResolution": "Node",
-//    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "strict": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "sourceMap": true
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["**/*.test.ts"]
+  "include": ["src/**/*.ts", "src/**/*.json"],
+  "exclude": ["node_modules", "target", "**/*.test.ts"]
 }

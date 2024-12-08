@@ -12,7 +12,10 @@
     "@gatling.io/cli": "3.13.103",
     "prettier": "3.3.3",
     "rimraf": "6.0.1",
-    "typescript": "5.7.2"
+    "typescript": "5.7.2",
+    "@faker-js/faker": "^8.0.0",
+    "fast-xml-parser": "^4.5.0",
+    "@types/node": "^22.10.1"
   },
   "scripts": {
     "clean": "rimraf target",
@@ -20,6 +23,9 @@
     "check": "tsc --noEmit",
     "build": "tsc --noEmit && gatling build --typescript",
     "recorder": "gatling recorder --typescript",
-    "computerdatabase": "tsc --noEmit && gatling run --typescript --simulation computerdatabase"
+    "computerdatabase": "tsc --noEmit && gatling run --typescript --simulation computerdatabase",
+    "pet-simulation": "tsc --noEmit && gatling run --typescript --simulation pet --sources-folder src/simulations",
+    "store-simulation": "tsc --noEmit && gatling run --typescript --simulation store --sources-folder src/simulations",
+    "user-simulation": "tsc --noEmit && gatling run --typescript --simulation user --sources-folder src/simulations"
   }
 }
