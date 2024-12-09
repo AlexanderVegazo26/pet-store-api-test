@@ -76,18 +76,8 @@ jobs:
 
       - name: Run API Tests
         working-directory: ./api-test-automation
-        env:
-          NODE_OPTIONS: "-r tsconfig-paths/register"
-          TS_NODE_PROJECT: "./tsconfig.json"
-          DEBUG: pw:api*
         run: |
-          if [ "${{ github.event.inputs.test_type }}" != "all" ]; then
-            npm run test -- tests/${{ github.event.inputs.test_type }}/
-          elif [ "${{ github.event.inputs.debug }}" = "true" ]; then
-            npm run test:debug
-          else
-            npm run test
-          fi
+          npm run test
 
       - name: Upload Test Report
         if: always()
