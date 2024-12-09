@@ -14,7 +14,7 @@ on:
           - store
           - user
       browser:
-        description: "Browser to run tests on"
+        description: "Test Project"
         required: true
         default: "API Tests"
         type: choice
@@ -82,38 +82,18 @@ jobs:
         working-directory: ./api-test-automation
         run: npm ci
 
-      - name: Install Playwright Browsers
-        working-directory: ./api-test-automation
-        run: |
-          if [ "${{ github.event.inputs.browser }}" = "chromium" ]; then
-            npx playwright install chromium --with-deps
-          elif [ "${{ github.event.inputs.browser }}" = "firefox" ]; then
-            npx playwright install firefox --with-deps
-          elif [ "${{ github.event.inputs.browser }}" = "webkit" ]; then
-            npx playwright install webkit --with-deps
-          else
-            npx playwright install --with-deps
-          fi
-
-      - name: Run Playwright tests
+      - name: Run API Tests
         working-directory: ./api-test-automation
         run: |
           # Construct test command based on inputs
           CMD="npx playwright test"
 
-          # Add browser selection if specified
-          if [ "${{ github.event.inputs.browser }}" != "" ]; then
-            CMD="$CMD --project=${{ github.event.inputs.browser }}"
-          fi
+          # Add project selection
+          CMD="$CMD --project='API Tests'"
 
           # Add test type filter if specified
           if [ "${{ github.event.inputs.test_type }}" != "all" ]; then
             CMD="$CMD tests/${{ github.event.inputs.test_type }}/"
-          fi
-
-          # Add headed mode if selected
-          if [ "${{ github.event.inputs.headed }}" = "true" ]; then
-            CMD="$CMD --headed"
           fi
 
           # Add debug mode if selected
@@ -147,8 +127,7 @@ jobs:
               <div class="config-section">
                 <h3>Test Parameters</h3>
                 <p>Test Suite: ${{ github.event.inputs.test_type || 'all' }}</p>
-                <p>Browser: ${{ github.event.inputs.browser || 'all' }}</p>
-                <p>Headed Mode: ${{ github.event.inputs.headed || 'false' }}</p>
+                <p>Project: ${{ github.event.inputs.browser || 'API Tests' }}</p>
                 <p>Debug Mode: ${{ github.event.inputs.debug || 'false' }}</p>
               </div>
               
