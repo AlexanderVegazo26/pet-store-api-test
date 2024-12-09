@@ -9,19 +9,16 @@ The project is divided into two main components:
 1. Functional API Testing (`api-test-automation`)
 2. Performance Testing (`api-test-performance`)
 
-Both test suites target the [Swagger Pet Store](https://github.com/swagger-api/swagger-petstore) API, which provides endpoints for managing pets, store orders, and users.
+Both test projects target the [Swagger Pet Store](https://github.com/swagger-api/swagger-petstore) API, which provides endpoints for managing pets, store orders, and users.
 
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
-- [Project Structure](#project-structure)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Running Tests](#running-tests)
 - [CI/CD Integration](#cicd-integration)
 - [Test Reports](#test-reports)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Prerequisites
 
