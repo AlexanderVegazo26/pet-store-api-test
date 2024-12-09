@@ -86,14 +86,16 @@ jobs:
           NODE_OPTIONS: "-r tsconfig-paths/register"
         run: npm run test
 
-      - name: Verify Report Directory
+      - name: Prepare Report Directory
         run: |
-          echo "Checking Playwright report directory contents:"
-          ls -la api-test-automation/playwright-report/
-          if [ ! -f "api-test-automation/playwright-report/index.html" ]; then
-            echo "index.html not found in report directory"
-            exit 1
-          fi
+          # Create a directory structure for the reports
+          mkdir -p gh-pages/api-test-automation
+
+          # Copy the Playwright report to the api-test-automation subdirectory
+          cp -r api-test-automation/playwright-report/* gh-pages/api-test-automation/
+
+          echo "Checking prepared directory structure:"
+          ls -la gh-pages/api-test-automation/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -101,7 +103,7 @@ jobs:
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "api-test-automation/playwright-report"
+          path: gh-pages
 
       - name: Deploy to GitHub Pages
         id: deployment
@@ -112,7 +114,7 @@ jobs:
       - name: Print Report URL
         run: |
           echo "Functional Test Report will be available at:"
-          echo "https://alexandervegazo26.github.io/pet-store-api-test/"
+          echo "https://alexandervegazo26.github.io/pet-store-api-test/api-test-automation/"
 
       - name: Wait for GitHub Pages
         run: sleep 30

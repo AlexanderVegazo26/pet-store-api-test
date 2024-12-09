@@ -117,37 +117,35 @@ jobs:
       - name: Prepare Report Directory
         id: prepare_report
         run: |
-          REPORT_BASE_DIR="api-test-performance/target/gatling"
+          # Create the base directory structure
+          mkdir -p gh-pages/api-test-performance
 
           # Find the latest simulation directory
-          LATEST_SIM=$(find "$REPORT_BASE_DIR" -maxdepth 1 -type d -name "jssimulation-*" | sort -r | head -n 1)
+          LATEST_SIM=$(find "api-test-performance/target/gatling" -maxdepth 1 -type d -name "jssimulation-*" | sort -r | head -n 1)
 
           if [ -z "$LATEST_SIM" ]; then
             echo "Error: No simulation directory found"
             exit 1
           fi
 
-          echo "Latest simulation directory: $LATEST_SIM"
-
-          # Create a directory for all reports
-          REPORTS_DIR="$REPORT_BASE_DIR/reports"
-          mkdir -p "$REPORTS_DIR"
-
-          # Get the simulation name (e.g., jssimulation-20241208235724403)
+          # Get the simulation name
           SIM_NAME=$(basename "$LATEST_SIM")
+          echo "Latest simulation: $SIM_NAME"
 
-          # Copy the entire simulation directory
-          cp -r "$LATEST_SIM" "$REPORTS_DIR/"
+          # Copy the entire simulation directory to the performance test directory
+          cp -r "$LATEST_SIM" "gh-pages/api-test-performance/"
 
           # Verify the copy
-          if [ ! -f "$REPORTS_DIR/$SIM_NAME/index.html" ]; then
+          if [ ! -f "gh-pages/api-test-performance/$SIM_NAME/index.html" ]; then
             echo "Error: Report files not copied correctly"
             exit 1
           fi
 
-          echo "report_path=$REPORTS_DIR" >> "$GITHUB_OUTPUT"
-          echo "Prepared report directory structure:"
-          ls -R "$REPORTS_DIR"
+          echo "Prepared directory structure:"
+          ls -R gh-pages/api-test-performance
+
+          # Save the simulation name for the Print Report URL step
+          echo "simulation_name=$SIM_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -155,7 +153,7 @@ jobs:
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ steps.prepare_report.outputs.report_path }}
+          path: gh-pages
 
       - name: Deploy to GitHub Pages
         id: deployment
@@ -166,7 +164,7 @@ jobs:
       - name: Print Report URL
         run: |
           echo "Performance Test Report will be available at:"
-          echo "https://alexandervegazo26.github.io/pet-store-api-test/reports/$(basename $(find api-test-performance/target/gatling -maxdepth 1 -type d -name 'jssimulation-*' | sort -r | head -n 1))"
+          echo "https://alexandervegazo26.github.io/pet-store-api-test/api-test-performance/${{ steps.prepare_report.outputs.simulation_name }}"
 
       - name: Wait for GitHub Pages
         run: sleep 30
