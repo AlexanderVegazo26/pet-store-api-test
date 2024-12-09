@@ -79,11 +79,12 @@ jobs:
         working-directory: ./api-test-automation
         run: npm run test
 
-      - name: Create index.html for GitHub Pages
+      - name: Verify Report
         working-directory: ./api-test-automation/playwright-report
         run: |
           if [ ! -f "index.html" ]; then
-            cp report.html index.html
+            echo "No index.html found in Playwright report directory"
+            exit 1
           fi
 
       - name: Upload Test Report
@@ -104,6 +105,11 @@ jobs:
           force_orphan: true
           user_name: "github-actions[bot]"
           user_email: "github-actions[bot]@users.noreply.github.com"
+
+      - name: Print Report URL
+        run: |
+          echo "Functional Test Report will be available at:"
+          echo "https://alexandervegazo26.github.io/pet-store-api-test/functional-report/index.html"
 
       - name: Wait for GitHub Pages
         run: sleep 30

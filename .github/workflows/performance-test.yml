@@ -63,28 +63,32 @@ jobs:
       - name: Set Test Configuration
         working-directory: ./api-test-performance
         run: |
-          cat << EOF > .env
-          # Pet simulation variables
-          export PET_RAMP_DURATION=5
-          export CREATE_PETS=10
-          export READ_PETS=20
+          echo "# Pet simulation variables
+          PET_RAMP_DURATION=5
+          CREATE_PETS=10
+          READ_PETS=20
 
           # Store simulation variables
-          export ORDER_RAMP_DURATION=5
-          export CREATE_ORDERS=10
-          export READ_ORDERS=20
-          export DELETE_ORDERS=5
-          export READ_INVENTORY=15
+          ORDER_RAMP_DURATION=5
+          CREATE_ORDERS=10
+          READ_ORDERS=20
+          DELETE_ORDERS=5
+          READ_INVENTORY=15
 
           # User simulation variables
-          export USER_RAMP_DURATION=5
-          export CREATE_USERS=10
-          export READ_USERS=20
-          export UPDATE_USERS=8
-          export DELETE_USERS=5
-          export AUTH_USERS=25
-          EOF
-          echo "$(cat .env)" >> $GITHUB_ENV
+          USER_RAMP_DURATION=5
+          CREATE_USERS=10
+          READ_USERS=20
+          UPDATE_USERS=8
+          DELETE_USERS=5
+          AUTH_USERS=25" > .env
+
+          # Make environment variables available
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            if [[ ! "$line" =~ ^#.*$ ]] && [[ ! -z "$line" ]]; then
+              echo "export $line" >> $GITHUB_ENV
+            fi
+          done < .env
 
       - name: Run API Tests
         working-directory: ./api-test-performance
@@ -103,9 +107,9 @@ jobs:
       - name: Create index.html for GitHub Pages
         working-directory: ./api-test-performance/target/gatling
         run: |
-          LATEST_REPORT=$(ls -td -- */ | head -n 1)
+          LATEST_REPORT=$(ls -td jssimulation-*/ | head -n 1)
           if [ ! -f "${LATEST_REPORT}index.html" ]; then
-            echo "No index.html found in latest report directory"
+            echo "No index.html found in latest report directory: ${LATEST_REPORT}"
             exit 1
           fi
 
@@ -114,7 +118,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gatling-report
-          path: ./api-test-performance/target/gatling/
+          path: ./api-test-performance/target/gatling/jssimulation-*/
           retention-days: 30
 
       - name: Deploy Report to GitHub Pages
@@ -122,11 +126,18 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./api-test-performance/target/gatling
+          publish_dir: ./api-test-performance/target/gatling/jssimulation-*
           destination_dir: performance-report
           force_orphan: true
           user_name: "github-actions[bot]"
           user_email: "github-actions[bot]@users.noreply.github.com"
+
+      - name: Print Report URL
+        run: |
+          echo "Performance Test Report will be available at:"
+          LATEST_REPORT=$(ls -td ./api-test-performance/target/gatling/jssimulation-*/ | head -n 1)
+          REPORT_NAME=$(basename "$LATEST_REPORT")
+          echo "https://alexandervegazo26.github.io/pet-store-api-test/performance-report/"
 
       - name: Wait for GitHub Pages
         run: sleep 30
