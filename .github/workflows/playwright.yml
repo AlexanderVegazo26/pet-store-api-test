@@ -1,10 +1,6 @@
 name: Functional Tests
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
   workflow_dispatch:
     inputs:
       test_type:
@@ -50,6 +46,18 @@ jobs:
         with:
           repository: swagger-api/swagger-petstore
           path: swagger-petstore
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: "8"
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: Build Petstore with Maven
+        working-directory: ./swagger-petstore
+        run: |
+          mvn clean package -DskipTests
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -174,8 +182,8 @@ jobs:
           publish_dir: ./api-test-automation/test-report
           keep_files: true
           force_orphan: true
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
+          user_name: "github-actions[bot]"
+          user_email: "github-actions[bot]@users.noreply.github.com"
 
       - name: Cleanup Docker
         if: always()
