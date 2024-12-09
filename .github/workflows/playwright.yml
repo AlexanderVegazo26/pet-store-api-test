@@ -67,7 +67,7 @@ jobs:
       - name: Validate Module
         working-directory: ./api-test-automation
         run: |
-          if [ ! -f "src/api/storeApi.ts" ]; then
+          if [ ! -f "src/api/store-api.ts" ]; then
             echo "Module @api/storeApi not found!"
             exit 1
           fi
