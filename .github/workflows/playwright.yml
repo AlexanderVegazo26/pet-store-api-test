@@ -78,6 +78,7 @@ jobs:
         with:
           node-version: lts/*
           cache: "npm"
+          cache-dependency-path: "./api-test-automation/package-lock.json"
 
       - name: Install dependencies
         working-directory: ./api-test-automation
