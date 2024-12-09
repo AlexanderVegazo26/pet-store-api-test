@@ -1,5 +1,5 @@
+import { User } from "@/types/user.types";
 import { APIRequestContext, APIResponse } from "@playwright/test";
-import { User } from "@src/types/user.types";
 
 export class UserApi {
   constructor(private request: APIRequestContext) {}

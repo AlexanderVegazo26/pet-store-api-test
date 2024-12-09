@@ -54,22 +54,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: "npm"
-          cache-dependency-path: "./api-test-automation/package-lock.json"
 
       - name: Install Dependencies
         working-directory: ./api-test-automation
         run: |
-          npm ci
+          npm install
           npx playwright install --with-deps
 
-      - name: Clean and Build
+      - name: Build
         working-directory: ./api-test-automation
-        run: npm run build
+        run: |
+          npm run build
+          echo "Checking compiled files:"
+          ls -la dist/src/api || true
+          ls -la dist/tests || true
 
       - name: Run API Tests
         working-directory: ./api-test-automation
         env:
+          NODE_OPTIONS: "-r tsconfig-paths/register"
+          TS_NODE_PROJECT: "./tsconfig.json"
           DEBUG: pw:api*
         run: |
           if [ "${{ github.event.inputs.test_type }}" != "all" ]; then
