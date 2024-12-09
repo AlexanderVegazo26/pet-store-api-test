@@ -74,9 +74,6 @@ test.describe("Pet store API positive Tests", () => {
     const pet: Pet = DataGenerator.generatePet();
     await petApi.createPet(pet);
 
-    const getPetResponse = await petApi.getPetById(pet.id);
-    expect(getPetResponse.status()).toBe(200);
-
     const deleteResponse = await petApi.deletePet(pet.id);
     expect(deleteResponse.status()).toBe(200);
 

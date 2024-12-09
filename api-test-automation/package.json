@@ -2,10 +2,12 @@
   "name": "api-test-automation",
   "version": "1.0.0",
   "scripts": {
+    "clean": "rimraf dist playwright-report test-results",
     "build": "tsc",
-    "test": "NODE_OPTIONS='-r tsconfig-paths/register' playwright test",
-    "test:debug": "NODE_OPTIONS='-r tsconfig-paths/register' playwright test --debug",
-    "test:ui": "NODE_OPTIONS='-r tsconfig-paths/register' playwright test --ui",
+    "prebuild": "npm run clean",
+    "test": "playwright test",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
     "test:report": "playwright show-report",
     "pretest": "npm run build"
   },
@@ -19,6 +21,7 @@
     "@types/node": "^22.10.1",
     "dotenv": "^16.0.0",
     "fast-xml-parser": "^4.5.0",
+    "rimraf": "^5.0.5",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.2"
   }

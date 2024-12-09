@@ -9,16 +9,16 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": "./",
-    "rootDir": "./",
+    "baseUrl": ".",
     "paths": {
-      "@src/*":     ["src/*"],
-      "@api/*":     ["src/api/*"],
+      "@api/*": ["src/api/*"],
+      "@enums/*": ["src/enums/*"],
       "@helpers/*": ["src/helpers/*"],
-      "@enums/*":   ["src/enums/*"]
+      "@src/*": ["src/*"],
+      "@types/*": ["src/types/*"]
     },
     "types": ["node", "@playwright/test"]
   },
   "include": ["src/**/*", "tests/**/*", "playwright.config.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }

@@ -1,6 +1,8 @@
 name: Functional Tests
 
 on:
+  push:
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       test_type:
@@ -48,60 +50,50 @@ jobs:
           docker run --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:unstable
           timeout 60 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8080/api/v3/openapi.json)" != "200" ]]; do sleep 5; done' || false
 
-      - name: Setup Node.js and Install Dependencies
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: "npm"
           cache-dependency-path: "./api-test-automation/package-lock.json"
 
-      - name: Install Dependencies and Build
+      - name: Install Dependencies
         working-directory: ./api-test-automation
         run: |
           npm ci
           npx playwright install --with-deps
-          npx tsc --project tsconfig.json
+
+      - name: Clean and Build
+        working-directory: ./api-test-automation
+        run: npm run build
 
       - name: Run API Tests
         working-directory: ./api-test-automation
+        env:
+          DEBUG: pw:api*
         run: |
-          if [ "${{ github.event.inputs.debug }}" = "true" ]; then
-            DEBUG=pw:api* npm run test:debug
+          if [ "${{ github.event.inputs.test_type }}" != "all" ]; then
+            npm run test -- tests/${{ github.event.inputs.test_type }}/
+          elif [ "${{ github.event.inputs.debug }}" = "true" ]; then
+            npm run test:debug
           else
-            DEBUG=pw:api* npm run test
+            npm run test
           fi
 
-      - name: Prepare Test Report
+      - name: Upload Test Report
         if: always()
-        working-directory: ./api-test-automation
-        run: |
-          mkdir -p test-report
-          cp -r playwright-report/* test-report/
-          cat << EOF > test-report/config.html
-          <html><head><style>
-            body { font-family: Arial, sans-serif; margin: 40px; }
-            .config-section { margin-bottom: 30px; }
-          </style></head>
-          <body>
-            <h1>Test Configuration</h1>
-            <div class="config-section">
-              <h3>Test Parameters</h3>
-              <p>Test Suite: ${{ github.event.inputs.test_type || 'all' }}</p>
-              <p>Debug Mode: ${{ github.event.inputs.debug || 'false' }}</p>
-              <p>API URL: http://localhost:8080/api/v3</p>
-              <p>Run Date: $(date)</p>
-              <p>Run ID: ${{ github.run_id }}</p>
-            </div>
-            <p><a href="./index.html">View Test Report</a></p>
-          </body></html>
-          EOF
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: ./api-test-automation/playwright-report/
+          retention-days: 30
 
       - name: Deploy Report to GitHub Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./api-test-automation/test-report
+          publish_dir: ./api-test-automation/playwright-report
           force_orphan: true
           user_name: "github-actions[bot]"
           user_email: "github-actions[bot]@users.noreply.github.com"
