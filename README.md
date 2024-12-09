@@ -6,7 +6,7 @@ This repository contains a comprehensive testing suite for the Swagger Pet Store
 
 The project is divided into two main components:
 
-1. Functional API Testing (`api-test-automation`)
+1. Functional API Automation Testing (`api-test-automation`)
 2. Performance Testing (`api-test-performance`)
 
 Both test projects target the [Swagger Pet Store](https://github.com/swagger-api/swagger-petstore) API, which provides endpoints for managing pets, store orders, and users.
