@@ -82,19 +82,9 @@ jobs:
       - name: Create index.html for GitHub Pages
         working-directory: ./api-test-automation/playwright-report
         run: |
-          cat > index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Playwright Test Report</title>
-              <meta http-equiv="refresh" content="0; url=./index.html">
-            </head>
-            <body>
-              <p>Redirecting to test report...</p>
-            </body>
-          </html>
-          EOF
+          if [ ! -f "index.html" ]; then
+            cp report.html index.html
+          fi
 
       - name: Upload Test Report
         if: always()
@@ -110,6 +100,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./api-test-automation/playwright-report
+          destination_dir: functional-report
           force_orphan: true
           user_name: "github-actions[bot]"
           user_email: "github-actions[bot]@users.noreply.github.com"
@@ -126,5 +117,5 @@ jobs:
           docker system prune -f
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: "petstore-${{ github.ref }}"
+  cancel-in-progress: false

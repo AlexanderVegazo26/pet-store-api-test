@@ -58,11 +58,7 @@ jobs:
 
       - name: Install Dependencies
         working-directory: ./api-test-performance
-        run: |
-          npm ci
-          curl -fL https://github.com/gatling/gatling/releases/download/v3.9.5/gatling-3.9.5.zip -o gatling.zip
-          unzip gatling.zip
-          echo "${PWD}/gatling-3.9.5/bin" >> $GITHUB_PATH
+        run: npm ci
 
       - name: Set Test Configuration
         working-directory: ./api-test-performance
@@ -108,19 +104,10 @@ jobs:
         working-directory: ./api-test-performance/target/gatling
         run: |
           LATEST_REPORT=$(ls -td -- */ | head -n 1)
-          cat > index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Gatling Performance Test Report</title>
-              <meta http-equiv="refresh" content="0; url=./${LATEST_REPORT}index.html">
-            </head>
-            <body>
-              <p>Redirecting to performance test report...</p>
-            </body>
-          </html>
-          EOF
+          if [ ! -f "${LATEST_REPORT}index.html" ]; then
+            echo "No index.html found in latest report directory"
+            exit 1
+          fi
 
       - name: Upload Test Report
         if: always()
@@ -136,6 +123,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./api-test-performance/target/gatling
+          destination_dir: performance-report
           force_orphan: true
           user_name: "github-actions[bot]"
           user_email: "github-actions[bot]@users.noreply.github.com"
@@ -152,5 +140,5 @@ jobs:
           docker system prune -f
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: "petstore-${{ github.ref }}"
+  cancel-in-progress: false
