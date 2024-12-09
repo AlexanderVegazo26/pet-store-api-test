@@ -1,5 +1,5 @@
 import { Pet, PetListResponse } from "@/types/pet.types";
-import { PetApi } from "@/api/pet-api";
+import { PetApi } from "@api/pet-api";
 import { PetStatus } from "@enums/pet.enum";
 import { DataGenerator } from "@helpers/dataGenerator";
 import { XmlHelper } from "@helpers/xmlhelper";

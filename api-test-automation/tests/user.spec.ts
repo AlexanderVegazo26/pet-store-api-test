@@ -1,5 +1,5 @@
 import { User } from "@/types/user.types";
-import { UserApi } from "@/api/user-api";
+import { UserApi } from "@api/user-api";
 import { DataGenerator } from "@helpers/dataGenerator";
 import { XmlHelper } from "@helpers/xmlhelper";
 import { test, expect } from "@playwright/test";

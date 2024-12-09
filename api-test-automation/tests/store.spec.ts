@@ -1,4 +1,4 @@
-import { StoreApi } from "@/api/store-api";
+import { StoreApi } from "@api/store-api";
 import { InventoryResponse, Order } from "@/types/store.types";
 
 import { DataGenerator } from "@helpers/dataGenerator";
