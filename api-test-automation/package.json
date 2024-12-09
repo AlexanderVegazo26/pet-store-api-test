@@ -2,10 +2,12 @@
   "name": "api-test-automation",
   "version": "1.0.0",
   "scripts": {
+    "build": "tsc",
     "test": "playwright test",
     "test-ui": "playwright test --ui",
     "test:debug": "playwright test --debug",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "pretest": "npm run build"
   },
   "keywords": [],
   "author": "Alexander Vegazo",

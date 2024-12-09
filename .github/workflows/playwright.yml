@@ -61,13 +61,31 @@ jobs:
           npm ci
           npx playwright install --with-deps
 
+      - name: Verify Project Structure
+        working-directory: ./api-test-automation
+        run: |
+          echo "Current directory structure:"
+          ls -la
+          echo "Source directory:"
+          ls -la src/api || echo "src/api not found"
+          echo "Tests directory:"
+          ls -la tests || echo "tests not found"
+
+      - name: Build TypeScript
+        working-directory: ./api-test-automation
+        run: |
+          echo "TypeScript version:"
+          npx tsc --version
+          echo "Building TypeScript files..."
+          npx tsc --project tsconfig.json
+
       - name: Run API Tests
         working-directory: ./api-test-automation
         run: |
           if [ "${{ github.event.inputs.debug }}" = "true" ]; then
-            npm run test:debug
+            DEBUG=pw:api* npm run test:debug
           else
-            npm run test
+            DEBUG=pw:api* npm run test
           fi
 
       - name: Prepare Test Report
