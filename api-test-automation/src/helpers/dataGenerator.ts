@@ -1,11 +1,11 @@
 import { faker } from "@faker-js/faker";
 import { generateUniqueIntId } from "./generateUniqueId";
-import { Pet } from "@/types/pet.types";
+import { Pet } from "@src/types/pet.types";
 import { PetStatus } from "@enums/pet.enum";
-import { Order } from "@/types/store.types";
-import { User } from "@/types/user.types";
-import { OrderStatus } from "@/enums/store.enum";
-import { UserStatus } from "@/enums/user.enum";
+import { Order } from "@src/types/store.types";
+import { User } from "@src/types/user.types";
+import { OrderStatus } from "@enums/store.enum";
+import { UserStatus } from "@enums/user.enum";
 
 export class DataGenerator {
   static generatePet(): Pet {

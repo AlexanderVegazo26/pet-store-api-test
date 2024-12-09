@@ -1,7 +1,7 @@
 import { UserApi } from "@api/userApi";
 import { DataGenerator } from "@helpers/dataGenerator";
 import { XmlHelper } from "@helpers/xmlhelper";
-import { User } from "@/types/user.types";
+import { User } from "@src/types/user.types";
 import { test, expect } from "@playwright/test";
 
 test.describe("User Endpoints", () => {

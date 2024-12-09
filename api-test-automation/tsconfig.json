@@ -12,10 +12,10 @@
     "baseUrl": "./",
     "rootDir": "./",
     "paths": {
-      "@/*": ["src/*"],
-      "@api/*": ["src/api/*"],
+      "@src/*":     ["src/*"],
+      "@api/*":     ["src/api/*"],
       "@helpers/*": ["src/helpers/*"],
-      "@enums/*": ["src/enums/*"]
+      "@enums/*":   ["src/enums/*"]
     },
     "types": ["node", "@playwright/test"]
   },

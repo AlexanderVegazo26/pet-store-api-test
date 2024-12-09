@@ -2,7 +2,7 @@ import { PetApi } from "@api/petApi";
 import { PetStatus } from "@enums/pet.enum";
 import { DataGenerator } from "@helpers/dataGenerator";
 import { XmlHelper } from "@helpers/xmlhelper";
-import { Pet, PetListResponse } from "@/types/pet.types";
+import { Pet, PetListResponse } from "@src/types/pet.types";
 import { test, expect } from "@playwright/test";
 
 test.describe("Pet store API positive Tests", () => {
