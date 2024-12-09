@@ -13,18 +13,6 @@ on:
           - pet
           - store
           - user
-      browser:
-        description: "Test Project"
-        required: true
-        default: "API Tests"
-        type: choice
-        options:
-          - API Tests
-      headed:
-        description: "Run in headed mode"
-        required: false
-        type: boolean
-        default: false
       debug:
         description: "Run in debug mode"
         required: false
@@ -82,30 +70,18 @@ jobs:
         working-directory: ./api-test-automation
         run: npm ci
 
+      - name: Install Playwright
+        working-directory: ./api-test-automation
+        run: npx playwright install
+
       - name: Run API Tests
         working-directory: ./api-test-automation
         run: |
-          # Construct test command based on inputs
-          CMD="npx playwright test"
-
-          # Add project selection (with proper quoting)
-          CMD="$CMD --project=\"API Tests\""
-
-          # Add test type filter if specified
-          if [ "${{ github.event.inputs.test_type }}" != "all" ]; then
-            CMD="$CMD tests/${{ github.event.inputs.test_type }}/"
-          fi
-
-          # Add debug mode if selected
           if [ "${{ github.event.inputs.debug }}" = "true" ]; then
-            CMD="$CMD --debug"
+            npm run test:debug
+          else
+            npm run test
           fi
-
-          # Output the command for debugging
-          echo "Running command: $CMD"
-
-          # Run the tests
-          eval "$CMD"
 
       - name: Prepare Test Report
         if: always()
@@ -130,7 +106,6 @@ jobs:
               <div class="config-section">
                 <h3>Test Parameters</h3>
                 <p>Test Suite: ${{ github.event.inputs.test_type || 'all' }}</p>
-                <p>Project: ${{ github.event.inputs.browser || 'API Tests' }}</p>
                 <p>Debug Mode: ${{ github.event.inputs.debug || 'false' }}</p>
               </div>
               
