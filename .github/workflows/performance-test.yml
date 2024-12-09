@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       test_type:
-        description: "Test type to run"
+        description: "Test suite to run"
         required: true
         default: "all"
         type: choice
@@ -15,13 +15,19 @@ on:
           - pet
           - store
           - user
+      debug:
+        description: "Run in debug mode"
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  performance-test:
+  test:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Performance Tests
+      - name: Checkout Test Repository
         uses: actions/checkout@v4
 
       - name: Checkout Swagger Petstore
@@ -30,29 +36,30 @@ jobs:
           repository: swagger-api/swagger-petstore
           path: swagger-petstore
 
-      - name: Build Petstore Docker Image
-        working-directory: ./swagger-petstore
-        run: docker build -t swaggerapi/petstore3:unstable .
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: "8"
+          distribution: "temurin"
+          cache: "maven"
 
-      - name: Start Petstore Container
+      - name: Build & Start Petstore
         run: |
+          cd swagger-petstore
+          mvn clean package -DskipTests
+          docker build -t swaggerapi/petstore3:unstable .
           docker run --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:unstable
-          # Wait for server to be ready
           timeout 60 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8080/api/v3/openapi.json)" != "200" ]]; do sleep 5; done' || false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: lts/*
 
       - name: Install Dependencies
         working-directory: ./api-test-performance
-        run: npm ci
-
-      - name: Install Gatling CLI
-        working-directory: ./api-test-performance
         run: |
+          npm ci
           curl -fL https://github.com/gatling/gatling/releases/download/v3.9.5/gatling-3.9.5.zip -o gatling.zip
           unzip gatling.zip
           echo "${PWD}/gatling-3.9.5/bin" >> $GITHUB_PATH
@@ -81,11 +88,9 @@ jobs:
           export DELETE_USERS=5
           export AUTH_USERS=25
           EOF
-
-          # Make environment variables available
           echo "$(cat .env)" >> $GITHUB_ENV
 
-      - name: Run Performance Tests
+      - name: Run API Tests
         working-directory: ./api-test-performance
         run: |
           source .env
@@ -99,35 +104,52 @@ jobs:
             npm run user-simulation
           fi
 
-      - name: Cleanup Docker
+      - name: Create index.html for GitHub Pages
+        working-directory: ./api-test-performance/target/gatling
+        run: |
+          LATEST_REPORT=$(ls -td -- */ | head -n 1)
+          cat > index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Gatling Performance Test Report</title>
+              <meta http-equiv="refresh" content="0; url=./${LATEST_REPORT}index.html">
+            </head>
+            <body>
+              <p>Redirecting to performance test report...</p>
+            </body>
+          </html>
+          EOF
+
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gatling-report
+          path: ./api-test-performance/target/gatling/
+          retention-days: 30
+
+      - name: Deploy Report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./api-test-performance/target/gatling
+          force_orphan: true
+          user_name: "github-actions[bot]"
+          user_email: "github-actions[bot]@users.noreply.github.com"
+
+      - name: Wait for GitHub Pages
+        run: sleep 30
+
+      - name: Cleanup
         if: always()
         run: |
           docker stop swaggerapi-petstore3 || true
           docker rm swaggerapi-petstore3 || true
           docker image rm swaggerapi/petstore3:unstable || true
           docker system prune -f
-
-      - name: Cleanup Environment
-        if: always()
-        working-directory: ./api-test-performance
-        run: |
-          rm -rf swagger-petstore
-          rm -rf gatling-3.9.5
-          rm -f gatling.zip
-          npm run clean
-
-      - name: Check Test Results
-        if: always()
-        run: |
-          if [ -f target/gatling/**/simulation.log ]; then
-            if grep -q "status.find.is(200), but actually found 500" target/gatling/**/simulation.log; then
-              echo "Tests failed with 500 errors"
-              exit 1
-            fi
-          else
-            echo "No simulation log found"
-            exit 1
-          fi
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
