@@ -1,0 +1,296 @@
+name: Performance Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: "Test type to run"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - pet
+          - store
+          - user
+      # Pet simulation variables
+      pet_ramp_duration:
+        description: "Pet operations ramp duration (seconds)"
+        required: true
+        default: "5"
+        type: string
+      create_pets:
+        description: "Number of users for pet creation"
+        required: true
+        default: "10"
+        type: string
+      read_pets:
+        description: "Number of users for pet read operations"
+        required: true
+        default: "20"
+        type: string
+      # Store simulation variables
+      order_ramp_duration:
+        description: "Order operations ramp duration (seconds)"
+        required: true
+        default: "5"
+        type: string
+      create_orders:
+        description: "Number of users for order creation"
+        required: true
+        default: "10"
+        type: string
+      read_orders:
+        description: "Number of users for order read operations"
+        required: true
+        default: "20"
+        type: string
+      delete_orders:
+        description: "Number of users for order deletion"
+        required: true
+        default: "5"
+        type: string
+      read_inventory:
+        description: "Number of users for inventory read"
+        required: true
+        default: "15"
+        type: string
+      # User simulation variables
+      user_ramp_duration:
+        description: "User operations ramp duration (seconds)"
+        required: true
+        default: "5"
+        type: string
+      create_users:
+        description: "Number of users for user creation"
+        required: true
+        default: "10"
+        type: string
+      read_users:
+        description: "Number of users for user read operations"
+        required: true
+        default: "20"
+        type: string
+      update_users:
+        description: "Number of users for user updates"
+        required: true
+        default: "8"
+        type: string
+      delete_users:
+        description: "Number of users for user deletion"
+        required: true
+        default: "5"
+        type: string
+      auth_users:
+        description: "Number of users for auth operations"
+        required: true
+        default: "25"
+        type: string
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Performance Tests
+        uses: actions/checkout@v4
+
+      - name: Checkout Swagger Petstore
+        uses: actions/checkout@v4
+        with:
+          repository: swagger-api/swagger-petstore
+          path: swagger-petstore
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Petstore Docker Image
+        working-directory: ./swagger-petstore
+        run: |
+          docker build -t swaggerapi/petstore3:unstable .
+
+      - name: Start Petstore Container
+        run: |
+          docker run --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:unstable
+          # Wait for server to be ready
+          timeout 60 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8080/api/v3/openapi.json)" != "200" ]]; do sleep 5; done' || false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Gatling CLI
+        run: |
+          curl -fL https://github.com/gatling/gatling/releases/download/v3.9.5/gatling-3.9.5.zip -o gatling.zip
+          unzip gatling.zip
+          echo "${PWD}/gatling-3.9.5/bin" >> $GITHUB_PATH
+
+      - name: Set Test Configuration
+        run: |
+          # Create a .env file for Gatling
+          cat << EOF > .env
+          # Pet simulation variables
+          export PET_RAMP_DURATION=${{ github.event.inputs.pet_ramp_duration || '5' }}
+          export CREATE_PETS=${{ github.event.inputs.create_pets || '10' }}
+          export READ_PETS=${{ github.event.inputs.read_pets || '20' }}
+
+          # Store simulation variables
+          export ORDER_RAMP_DURATION=${{ github.event.inputs.order_ramp_duration || '5' }}
+          export CREATE_ORDERS=${{ github.event.inputs.create_orders || '10' }}
+          export READ_ORDERS=${{ github.event.inputs.read_orders || '20' }}
+          export DELETE_ORDERS=${{ github.event.inputs.delete_orders || '5' }}
+          export READ_INVENTORY=${{ github.event.inputs.read_inventory || '15' }}
+
+          # User simulation variables
+          export USER_RAMP_DURATION=${{ github.event.inputs.user_ramp_duration || '5' }}
+          export CREATE_USERS=${{ github.event.inputs.create_users || '10' }}
+          export READ_USERS=${{ github.event.inputs.read_users || '20' }}
+          export UPDATE_USERS=${{ github.event.inputs.update_users || '8' }}
+          export DELETE_USERS=${{ github.event.inputs.delete_users || '5' }}
+          export AUTH_USERS=${{ github.event.inputs.auth_users || '25' }}
+          EOF
+
+          # Make environment variables available
+          echo "$(cat .env)" >> $GITHUB_ENV
+
+      - name: Run Performance Tests
+        run: |
+          source .env
+          if [[ "${{ github.event.inputs.test_type }}" == "pet" || "${{ github.event.inputs.test_type }}" == "all" ]]; then
+            npm run pet-simulation
+          fi
+          if [[ "${{ github.event.inputs.test_type }}" == "store" || "${{ github.event.inputs.test_type }}" == "all" ]]; then
+            npm run store-simulation
+          fi
+          if [[ "${{ github.event.inputs.test_type }}" == "user" || "${{ github.event.inputs.test_type }}" == "all" ]]; then
+            npm run user-simulation
+          fi
+
+      - name: Prepare Reports
+        if: always()
+        run: |
+          mkdir -p performance-reports
+          # Copy all simulation reports
+          for dir in target/gatling/jssimulation-*/; do
+            test_name=$(basename "$dir")
+            cp -r "$dir" "performance-reports/$test_name"
+          done
+
+          # Create an index page with test configuration
+          cat << EOF > performance-reports/index.html
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; }
+              .test-info { margin-bottom: 20px; }
+              .config-section { margin-bottom: 30px; }
+              .test-list { margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <h1>Performance Test Reports</h1>
+            
+            <div class="test-info">
+              <h2>Test Configuration</h2>
+              
+              <div class="config-section">
+                <h3>General</h3>
+                <p>Test Type: ${{ github.event.inputs.test_type || 'all' }}</p>
+              </div>
+              
+              <div class="config-section">
+                <h3>Pet Operations</h3>
+                <p>Ramp Duration: ${{ github.event.inputs.pet_ramp_duration || '5' }} seconds</p>
+                <p>Create Users: ${{ github.event.inputs.create_pets || '10' }}</p>
+                <p>Read Users: ${{ github.event.inputs.read_pets || '20' }}</p>
+              </div>
+              
+              <div class="config-section">
+                <h3>Store Operations</h3>
+                <p>Ramp Duration: ${{ github.event.inputs.order_ramp_duration || '5' }} seconds</p>
+                <p>Create Orders: ${{ github.event.inputs.create_orders || '10' }}</p>
+                <p>Read Orders: ${{ github.event.inputs.read_orders || '20' }}</p>
+                <p>Delete Orders: ${{ github.event.inputs.delete_orders || '5' }}</p>
+                <p>Read Inventory: ${{ github.event.inputs.read_inventory || '15' }}</p>
+              </div>
+              
+              <div class="config-section">
+                <h3>User Operations</h3>
+                <p>Ramp Duration: ${{ github.event.inputs.user_ramp_duration || '5' }} seconds</p>
+                <p>Create Users: ${{ github.event.inputs.create_users || '10' }}</p>
+                <p>Read Users: ${{ github.event.inputs.read_users || '20' }}</p>
+                <p>Update Users: ${{ github.event.inputs.update_users || '8' }}</p>
+                <p>Delete Users: ${{ github.event.inputs.delete_users || '5' }}</p>
+                <p>Auth Users: ${{ github.event.inputs.auth_users || '25' }}</p>
+              </div>
+            </div>
+
+            <div class="test-list">
+              <h2>Available Reports:</h2>
+              <ul>
+          EOF
+
+          for dir in performance-reports/jssimulation-*/; do
+            test_name=$(basename "$dir")
+            echo "<li><a href='./$test_name/index.html'>$test_name</a></li>" >> performance-reports/index.html
+          done
+
+          echo "</ul></div></body></html>" >> performance-reports/index.html
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: gatling-reports
+          path: performance-reports
+          retention-days: 30
+
+      - name: Deploy Reports to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./performance-reports
+          keep_files: false
+
+      - name: Cleanup Docker
+        if: always()
+        run: |
+          docker stop swaggerapi-petstore3 || true
+          docker rm swaggerapi-petstore3 || true
+          docker image rm swaggerapi/petstore3:unstable || true
+          docker system prune -f
+
+      - name: Cleanup Environment
+        if: always()
+        run: |
+          rm -rf swagger-petstore
+          rm -rf gatling-3.9.5
+          rm -f gatling.zip
+          npm run clean
+
+      - name: Check Test Results
+        if: always()
+        run: |
+          if [ -f target/gatling/**/simulation.log ]; then
+            if grep -q "status.find.is(200), but actually found 500" target/gatling/**/simulation.log; then
+              echo "Tests failed with 500 errors"
+              exit 1
+            fi
+          else
+            echo "No simulation log found"
+            exit 1
+          fi
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true

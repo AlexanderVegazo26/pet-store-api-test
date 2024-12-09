@@ -2,6 +2,7 @@ import { simulation, rampUsers } from "@gatling.io/core";
 import { createPetScenario, updatePetScenario } from "../scenarios/pet/petManagement.scenario";
 import { http } from "@gatling.io/http";
 import { findPetsByStatusScenario } from "../scenarios/pet/petSearch.scenario";
+import { getEnvVar } from "@utils/config/environment";
 
 export default simulation((setUp) => {
   const httpProtocol = http
@@ -9,9 +10,13 @@ export default simulation((setUp) => {
     .acceptHeader("application/json")
     .contentTypeHeader("application/json");
 
+  const petRampDuration = getEnvVar("PET_RAMP_DURATION", "5");
+  const createPets = getEnvVar("CREATE_PETS", "10");
+  const readPets = getEnvVar("READ_PETS", "20");
+
   setUp(
-    createPetScenario().injectOpen(rampUsers(10).during(5)),
-    updatePetScenario().injectOpen(rampUsers(5).during(5)),
-    findPetsByStatusScenario().injectOpen(rampUsers(20).during(5))
+    createPetScenario().injectOpen(rampUsers(createPets).during(petRampDuration)),
+    updatePetScenario().injectOpen(rampUsers(readPets).during(petRampDuration)),
+    findPetsByStatusScenario().injectOpen(rampUsers(readPets).during(petRampDuration))
   ).protocols(httpProtocol);
 });

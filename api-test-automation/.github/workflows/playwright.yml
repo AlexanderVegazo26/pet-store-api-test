@@ -1,27 +1,189 @@
-name: Playwright Tests
+name: Functional Tests
+
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: "Test suite to run"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - pet
+          - store
+          - user
+      browser:
+        description: "Browser to run tests on"
+        required: true
+        default: "chromium"
+        type: choice
+        options:
+          - chromium
+          - firefox
+          - webkit
+      headed:
+        description: "Run in headed mode"
+        required: false
+        type: boolean
+        default: false
+      debug:
+        description: "Run in debug mode"
+        required: false
+        type: boolean
+        default: false
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      - name: Checkout Test Repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Swagger Petstore
+        uses: actions/checkout@v4
+        with:
+          repository: swagger-api/swagger-petstore
+          path: swagger-petstore
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Petstore Docker Image
+        working-directory: ./swagger-petstore
+        run: |
+          docker build -t swaggerapi/petstore3:unstable .
+
+      - name: Start Petstore Container
+        run: |
+          docker run --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:unstable
+          # Wait for server to be ready
+          timeout 60 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8080/api/v3/openapi.json)" != "200" ]]; do sleep 5; done' || false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: |
+          if [ "${{ github.event.inputs.browser }}" = "chromium" ]; then
+            npx playwright install chromium --with-deps
+          elif [ "${{ github.event.inputs.browser }}" = "firefox" ]; then
+            npx playwright install firefox --with-deps
+          elif [ "${{ github.event.inputs.browser }}" = "webkit" ]; then
+            npx playwright install webkit --with-deps
+          else
+            npx playwright install --with-deps
+          fi
+
+      - name: Run Playwright tests
+        run: |
+          # Construct test command based on inputs
+          CMD="npx playwright test"
+
+          # Add browser selection if specified
+          if [ "${{ github.event.inputs.browser }}" != "" ]; then
+            CMD="$CMD --project=${{ github.event.inputs.browser }}"
+          fi
+
+          # Add test type filter if specified
+          if [ "${{ github.event.inputs.test_type }}" != "all" ]; then
+            CMD="$CMD tests/${{ github.event.inputs.test_type }}/"
+          fi
+
+          # Add headed mode if selected
+          if [ "${{ github.event.inputs.headed }}" = "true" ]; then
+            CMD="$CMD --headed"
+          fi
+
+          # Add debug mode if selected
+          if [ "${{ github.event.inputs.debug }}" = "true" ]; then
+            CMD="$CMD --debug"
+          fi
+
+          # Run the tests
+          $CMD
+
+      - name: Prepare Test Report
+        if: always()
+        run: |
+          mkdir -p test-report
+          cp -r playwright-report/* test-report/
+
+          # Create an index page with test configuration
+          cat << EOF > test-report/config.html
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; }
+              .test-info { margin-bottom: 20px; }
+              .config-section { margin-bottom: 30px; }
+            </style>
+          </head>
+          <body>
+            <h1>Test Configuration</h1>
+            <div class="test-info">
+              <div class="config-section">
+                <h3>Test Parameters</h3>
+                <p>Test Suite: ${{ github.event.inputs.test_type || 'all' }}</p>
+                <p>Browser: ${{ github.event.inputs.browser || 'all' }}</p>
+                <p>Headed Mode: ${{ github.event.inputs.headed || 'false' }}</p>
+                <p>Debug Mode: ${{ github.event.inputs.debug || 'false' }}</p>
+              </div>
+              
+              <div class="config-section">
+                <h3>Environment</h3>
+                <p>API URL: http://localhost:8080/api/v3</p>
+                <p>Run Date: $(date)</p>
+                <p>Workflow: ${{ github.workflow }}</p>
+                <p>Run ID: ${{ github.run_id }}</p>
+              </div>
+            </div>
+            <p><a href="./index.html">View Test Report</a></p>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload Test Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: test-report/
+          retention-days: 30
+
+      - name: Deploy Report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./test-report
+          keep_files: true
+
+      - name: Cleanup Docker
+        if: always()
+        run: |
+          docker stop swaggerapi-petstore3 || true
+          docker rm swaggerapi-petstore3 || true
+          docker image rm swaggerapi/petstore3:unstable || true
+          docker system prune -f
+
+      - name: Cleanup Environment
+        if: always()
+        run: |
+          rm -rf swagger-petstore
+          npm run clean || true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true

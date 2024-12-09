@@ -7,6 +7,7 @@ import {
 } from "@scenarios/store/order.scenario";
 
 import { http } from "@gatling.io/http";
+import { getEnvVar } from "@utils/config/environment";
 
 export default simulation((setUp) => {
   const httpProtocol = http
@@ -14,10 +15,16 @@ export default simulation((setUp) => {
     .acceptHeader("application/json")
     .contentTypeHeader("application/json");
 
+  const orderRampDuration = getEnvVar("ORDER_RAMP_DURATION", "5");
+  const createOrders = getEnvVar("CREATE_ORDERS", "10");
+  const readOrders = getEnvVar("READ_ORDERS", "20");
+  const deleteOrders = getEnvVar("DELETE_ORDERS", "5");
+  const readInventory = getEnvVar("READ_INVENTORY", "15");
+
   setUp(
-    placeOrderScenario().injectOpen(rampUsers(10).during(5)),
-    getOrderByIdScenario().injectOpen(rampUsers(20).during(5)),
-    deleteOrderScenario().injectOpen(rampUsers(5).during(5)),
-    getInventoryScenario().injectOpen(rampUsers(15).during(5))
+    placeOrderScenario().injectOpen(rampUsers(createOrders).during(orderRampDuration)),
+    getOrderByIdScenario().injectOpen(rampUsers(readOrders).during(orderRampDuration)),
+    deleteOrderScenario().injectOpen(rampUsers(deleteOrders).during(orderRampDuration)),
+    getInventoryScenario().injectOpen(rampUsers(readInventory).during(orderRampDuration))
   ).protocols(httpProtocol);
 });

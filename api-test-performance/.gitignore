@@ -3,3 +3,4 @@ target/
 
 # Gatling run results
 results/
+.env
