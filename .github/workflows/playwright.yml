@@ -4,22 +4,6 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
-    inputs:
-      test_type:
-        description: "Test suite to run"
-        required: true
-        default: "all"
-        type: choice
-        options:
-          - all
-          - pet
-          - store
-          - user
-      debug:
-        description: "Run in debug mode"
-        required: false
-        type: boolean
-        default: false
 
 jobs:
   test:
@@ -29,11 +13,12 @@ jobs:
       - name: Checkout Test Repository
         uses: actions/checkout@v4
 
-      - name: Checkout Swagger Petstore
-        uses: actions/checkout@v4
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
         with:
-          repository: swagger-api/swagger-petstore
-          path: swagger-petstore
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -50,6 +35,22 @@ jobs:
           docker run --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:unstable
           timeout 60 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8080/api/v3/openapi.json)" != "200" ]]; do sleep 5; done' || false
 
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -61,8 +62,13 @@ jobs:
           npm install
           npx playwright install --with-deps
 
-      - name: Set Node.js Environment for Path Resolution
-        run: echo "NODE_OPTIONS=-r tsconfig-paths/register" >> $GITHUB_ENV
+      - name: Validate Module
+        working-directory: ./api-test-automation
+        run: |
+          if [ ! -f "src/api/storeApi.ts" ]; then
+            echo "Module @api/storeApi not found!"
+            exit 1
+          fi
 
       - name: Build
         working-directory: ./api-test-automation
@@ -70,9 +76,6 @@ jobs:
           NODE_OPTIONS: "-r tsconfig-paths/register"
         run: |
           npm run build
-          echo "Checking compiled files:"
-          ls -la dist/src/api || true
-          ls -la dist/tests || true
 
       - name: Run API Tests
         working-directory: ./api-test-automation
@@ -93,9 +96,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./api-test-automation/playwright-report
-          force_orphan: true
-          user_name: "github-actions[bot]"
-          user_email: "github-actions[bot]@users.noreply.github.com"
 
       - name: Cleanup
         if: always()
