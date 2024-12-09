@@ -61,8 +61,21 @@ jobs:
           npm install
           npx playwright install --with-deps
 
+      - name: Set Node.js Environment for Path Resolution
+        run: echo "NODE_OPTIONS=-r tsconfig-paths/register" >> $GITHUB_ENV
+
+      - name: Validate Module
+        working-directory: ./api-test-automation
+        run: |
+          if [ ! -f "src/api/storeApi.ts" ]; then
+            echo "Module @api/storeApi not found!"
+            exit 1
+          fi
+
       - name: Build
         working-directory: ./api-test-automation
+        env:
+          NODE_OPTIONS: "-r tsconfig-paths/register"
         run: |
           npm run build
           echo "Checking compiled files:"
