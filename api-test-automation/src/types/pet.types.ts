@@ -1,4 +1,4 @@
-import { PetStatus } from "../enums/pet.enum";
+import { PetStatus } from "@/enums/pet.enum";
 
 export interface Pet {
   id: number;
@@ -18,7 +18,6 @@ export interface tag {
   id: number;
   name: string;
 }
-
 
 export interface PetListResponse {
   ArrayList: {

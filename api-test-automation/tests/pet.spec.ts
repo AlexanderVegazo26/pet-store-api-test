@@ -1,9 +1,9 @@
+import { PetApi } from "@/api/petApi";
+import { PetStatus } from "@/enums/pet.enum";
+import { DataGenerator } from "@/helpers/dataGenerator";
+import { XmlHelper } from "@/helpers/xmlhelper";
+import { Pet, PetListResponse } from "@/types/pet.types";
 import { test, expect } from "@playwright/test";
-import { PetApi } from "../src/api/petApi";
-import { DataGenerator } from "../src/helpers/dataGenerator";
-import { Pet, PetListResponse } from "../src/types/pet.types";
-import { XmlHelper } from "../src/helpers/xmlhelper";
-import { PetStatus } from "../src/enums/pet.enum";
 
 test.describe("Pet store API positive Tests", () => {
   let petApi: PetApi;

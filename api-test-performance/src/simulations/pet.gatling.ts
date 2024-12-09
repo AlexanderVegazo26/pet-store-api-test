@@ -1,8 +1,8 @@
 import { simulation, rampUsers } from "@gatling.io/core";
-import { createPetScenario, updatePetScenario } from "../scenarios/pet/petManagement.scenario";
 import { http } from "@gatling.io/http";
-import { findPetsByStatusScenario } from "../scenarios/pet/petSearch.scenario";
 import { getEnvVar } from "@utils/config/environment";
+import { findPetsByStatusScenario } from "@scenarios/pet/petSearch.scenario";
+import { createPetScenario, updatePetScenario } from "@scenarios/pet/petManagement.scenario";
 
 export default simulation((setUp) => {
   const httpProtocol = http

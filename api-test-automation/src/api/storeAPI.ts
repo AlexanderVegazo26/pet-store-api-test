@@ -1,5 +1,5 @@
+import { Order } from "@/types/store.types";
 import { APIRequestContext, APIResponse } from "@playwright/test";
-import { Order } from "../types/store.types";
 
 export class StoreApi {
   constructor(private request: APIRequestContext) {}

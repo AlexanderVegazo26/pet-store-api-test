@@ -1,17 +1,14 @@
+import { StoreApi } from "@/api/storeApi";
+import { DataGenerator } from "@/helpers/dataGenerator";
+import { XmlHelper } from "@/helpers/xmlhelper";
+import { InventoryResponse, Order } from "@/types/store.types";
 import { test, expect } from "@playwright/test";
-import { StoreApi } from "../src/api/storeApi";
-import { PetApi } from "../src/api/petApi";
-import { DataGenerator } from "../src/helpers/dataGenerator";
-import { InventoryResponse, Order } from "../src/types/store.types";
-import { XmlHelper } from "../src/helpers/xmlhelper";
 
 test.describe("Store Endpoints", () => {
   let storeApi: StoreApi;
-  let petApi: PetApi;
 
   test.beforeEach(async ({ request }) => {
     storeApi = new StoreApi(request);
-    petApi = new PetApi(request);
   });
 
   test("should place a new order", async () => {
