@@ -1,5 +1,10 @@
 name: Functional Tests
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 on:
   push:
     branches: ["main"]
@@ -25,6 +30,8 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: "-r tsconfig-paths/register"
 
     steps:
       - name: Checkout Test Repository
@@ -62,13 +69,8 @@ jobs:
           npm install
           npx playwright install --with-deps
 
-      - name: Set Node.js Environment for Path Resolution
-        run: echo "NODE_OPTIONS=-r tsconfig-paths/register" >> $GITHUB_ENV
-
       - name: Build
         working-directory: ./api-test-automation
-        env:
-          NODE_OPTIONS: "-r tsconfig-paths/register"
         run: |
           npm run build
           echo "Checking compiled files:"
@@ -79,37 +81,33 @@ jobs:
         working-directory: ./api-test-automation
         run: npm run test
 
-      - name: Verify Report
-        working-directory: ./api-test-automation/playwright-report
+      - name: Verify Report Directory
         run: |
-          if [ ! -f "index.html" ]; then
-            echo "No index.html found in Playwright report directory"
+          echo "Checking Playwright report directory contents:"
+          ls -la api-test-automation/playwright-report/
+          if [ ! -f "api-test-automation/playwright-report/index.html" ]; then
+            echo "index.html not found in report directory"
             exit 1
           fi
 
-      - name: Upload Test Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: ./api-test-automation/playwright-report/
-          retention-days: 30
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
-      - name: Deploy Report to GitHub Pages
-        if: always()
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./api-test-automation/playwright-report
-          destination_dir: functional-report
-          force_orphan: true
-          user_name: "github-actions[bot]"
-          user_email: "github-actions[bot]@users.noreply.github.com"
+          path: "api-test-automation/playwright-report"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print Report URL
         run: |
           echo "Functional Test Report will be available at:"
-          echo "https://alexandervegazo26.github.io/pet-store-api-test/functional-report/index.html"
+          echo "https://alexandervegazo26.github.io/pet-store-api-test/"
 
       - name: Wait for GitHub Pages
         run: sleep 30

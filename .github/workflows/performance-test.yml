@@ -1,5 +1,10 @@
 name: Performance Tests
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 on:
   push:
     branches: ["main"]
@@ -104,40 +109,36 @@ jobs:
             npm run user-simulation
           fi
 
-      - name: Create index.html for GitHub Pages
-        working-directory: ./api-test-performance/target/gatling
+      - name: Verify Report Directory
         run: |
-          LATEST_REPORT=$(ls -td jssimulation-*/ | head -n 1)
-          if [ ! -f "${LATEST_REPORT}index.html" ]; then
-            echo "No index.html found in latest report directory: ${LATEST_REPORT}"
+          echo "Checking Gatling report directory contents:"
+          ls -la api-test-performance/target/gatling/
+          LATEST_REPORT=$(ls -t api-test-performance/target/gatling/jssimulation-* | head -n 1)
+          echo "Latest report directory: $LATEST_REPORT"
+          if [ ! -f "$LATEST_REPORT/index.html" ]; then
+            echo "index.html not found in report directory"
             exit 1
           fi
+          echo "REPORT_PATH=$LATEST_REPORT" >> $GITHUB_ENV
 
-      - name: Upload Test Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gatling-report
-          path: ./api-test-performance/target/gatling/jssimulation-*/
-          retention-days: 30
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
-      - name: Deploy Report to GitHub Pages
-        if: always()
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./api-test-performance/target/gatling/jssimulation-*
-          destination_dir: performance-report
-          force_orphan: true
-          user_name: "github-actions[bot]"
-          user_email: "github-actions[bot]@users.noreply.github.com"
+          path: "${{ env.REPORT_PATH }}"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print Report URL
         run: |
           echo "Performance Test Report will be available at:"
-          LATEST_REPORT=$(ls -td ./api-test-performance/target/gatling/jssimulation-*/ | head -n 1)
-          REPORT_NAME=$(basename "$LATEST_REPORT")
-          echo "https://alexandervegazo26.github.io/pet-store-api-test/performance-report/"
+          echo "https://alexandervegazo26.github.io/pet-store-api-test/performance/"
 
       - name: Wait for GitHub Pages
         run: sleep 30
