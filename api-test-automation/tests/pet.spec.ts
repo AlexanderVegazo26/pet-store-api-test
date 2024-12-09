@@ -1,7 +1,7 @@
-import { PetApi } from "@/api/petApi";
-import { PetStatus } from "@/enums/pet.enum";
-import { DataGenerator } from "@/helpers/dataGenerator";
-import { XmlHelper } from "@/helpers/xmlhelper";
+import { PetApi } from "@api/petApi";
+import { PetStatus } from "@enums/pet.enum";
+import { DataGenerator } from "@helpers/dataGenerator";
+import { XmlHelper } from "@helpers/xmlhelper";
 import { Pet, PetListResponse } from "@/types/pet.types";
 import { test, expect } from "@playwright/test";
 

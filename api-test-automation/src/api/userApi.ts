@@ -1,4 +1,3 @@
-// api/userApi.ts
 import { User } from "@/types/user.types";
 import { APIRequestContext, APIResponse } from "@playwright/test";
 

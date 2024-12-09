@@ -1,6 +1,6 @@
-import { UserApi } from "@/api/userApi";
-import { DataGenerator } from "@/helpers/dataGenerator";
-import { XmlHelper } from "@/helpers/xmlhelper";
+import { UserApi } from "@api/userApi";
+import { DataGenerator } from "@helpers/dataGenerator";
+import { XmlHelper } from "@helpers/xmlhelper";
 import { User } from "@/types/user.types";
 import { test, expect } from "@playwright/test";
 

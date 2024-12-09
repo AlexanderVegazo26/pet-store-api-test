@@ -15,8 +15,7 @@
       "@/*": ["src/*"],
       "@api/*": ["src/api/*"],
       "@helpers/*": ["src/helpers/*"],
-      "@enums/*": ["src/enyms/*"],
-      "@types/*": ["src/types/*"]
+      "@enums/*": ["src/enums/*"]
     },
     "types": ["node", "@playwright/test"]
   },

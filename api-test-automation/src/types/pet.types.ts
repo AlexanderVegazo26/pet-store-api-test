@@ -1,4 +1,4 @@
-import { PetStatus } from "@/enums/pet.enum";
+import { PetStatus } from "@enums/pet.enum";
 
 export interface Pet {
   id: number;

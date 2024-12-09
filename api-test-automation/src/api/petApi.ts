@@ -1,4 +1,4 @@
-import { PetStatus } from "@/enums/pet.enum";
+import { PetStatus } from "@enums/pet.enum";
 import { Pet } from "@/types/pet.types";
 import { APIRequestContext, APIResponse } from "@playwright/test";
 
