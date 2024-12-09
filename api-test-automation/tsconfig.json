@@ -9,13 +9,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
+    "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"],
       "@api/*": ["src/api/*"],
       "@helpers/*": ["src/helpers/*"],
       "@enums/*": ["src/enums/*"],
-      "@types/*": ["src/types/*"]
+      "@/types/*": ["src/types/*"]
     },
     "types": ["node", "@playwright/test"]
   },
