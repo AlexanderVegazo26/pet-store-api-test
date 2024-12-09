@@ -16,12 +16,10 @@ on:
       browser:
         description: "Browser to run tests on"
         required: true
-        default: "chromium"
+        default: "API Tests"
         type: choice
         options:
-          - chromium
-          - firefox
-          - webkit
+          - API Tests
       headed:
         description: "Run in headed mode"
         required: false
