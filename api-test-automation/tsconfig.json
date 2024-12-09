@@ -8,6 +8,12 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
-  }
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    "types": ["node", "@playwright/test"],
+    "lib": ["ESNext"]
+  },
+  "include": ["src/**/*", "tests/**/*", "playwright.config.ts"],
+  "exclude": ["node_modules"]
 }
