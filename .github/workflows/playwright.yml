@@ -72,7 +72,7 @@ jobs:
 
       - name: Install Playwright
         working-directory: ./api-test-automation
-        run: npx playwright install
+        run: npx playwright install --with-deps
 
       - name: Run API Tests
         working-directory: ./api-test-automation
