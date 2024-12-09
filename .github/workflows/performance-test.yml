@@ -30,6 +30,8 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    env:
+      REPORT_PATH: ""
 
     steps:
       - name: Checkout Test Repository
@@ -91,25 +93,26 @@ jobs:
           # Make environment variables available
           while IFS= read -r line || [[ -n "$line" ]]; do
             if [[ ! "$line" =~ ^#.*$ ]] && [[ ! -z "$line" ]]; then
-              echo "export $line" >> $GITHUB_ENV
+              echo "$line" >> $GITHUB_ENV
             fi
           done < .env
 
-      - name: Run API Tests
+      - name: Run Performance Tests
         working-directory: ./api-test-performance
         run: |
           source .env
-          if [[ "${{ github.event.inputs.test_type }}" == "pet" || "${{ github.event.inputs.test_type }}" == "all" ]]; then
+          if [[ "${{ github.event.inputs.test_type }}" == "pet" ]]; then
             npm run pet-simulation
-          fi
-          if [[ "${{ github.event.inputs.test_type }}" == "store" || "${{ github.event.inputs.test_type }}" == "all" ]]; then
+          elif [[ "${{ github.event.inputs.test_type }}" == "store" ]]; then
             npm run store-simulation
-          fi
-          if [[ "${{ github.event.inputs.test_type }}" == "user" || "${{ github.event.inputs.test_type }}" == "all" ]]; then
+          elif [[ "${{ github.event.inputs.test_type }}" == "user" ]]; then
             npm run user-simulation
+          else
+            npm run all-simulations
           fi
 
       - name: Verify Report Directory
+        id: verify_report
         run: |
           echo "Checking Gatling report directory contents:"
           ls -la api-test-performance/target/gatling/
@@ -119,7 +122,7 @@ jobs:
             echo "index.html not found in report directory"
             exit 1
           fi
-          echo "REPORT_PATH=$LATEST_REPORT" >> $GITHUB_ENV
+          echo "report_path=$LATEST_REPORT" >> "$GITHUB_OUTPUT"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -127,7 +130,7 @@ jobs:
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "${{ env.REPORT_PATH }}"
+          path: ${{ steps.verify_report.outputs.report_path }}
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -23,9 +23,9 @@
     "check": "tsc --noEmit",
     "build": "tsc --noEmit && gatling build --typescript",
     "recorder": "gatling recorder --typescript",
-    "computerdatabase": "tsc --noEmit && gatling run --typescript --simulation computerdatabase",
     "pet-simulation": "tsc --noEmit && gatling run --typescript --simulation pet --sources-folder src/simulations",
     "store-simulation": "tsc --noEmit && gatling run --typescript --simulation store --sources-folder src/simulations",
-    "user-simulation": "tsc --noEmit && gatling run --typescript --simulation user --sources-folder src/simulations"
+    "user-simulation": "tsc --noEmit && gatling run --typescript --simulation user --sources-folder src/simulations",
+    "all-simulations": "npm run pet-simulation && npm run store-simulation && npm run user-simulation"
   }
 }
