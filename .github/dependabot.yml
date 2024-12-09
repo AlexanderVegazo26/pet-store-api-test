@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    labels:
+      - "dependencies"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+    groups:
+      gatling:
+        patterns:
+          - "@gatling.io/*"
