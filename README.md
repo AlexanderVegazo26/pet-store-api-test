@@ -21,7 +21,7 @@ Both test projects target the [Swagger Pet Store](https://github.com/swagger-api
 - [Test Reports](#test-reports)
 - [Test Cases Functional](#test-cases)
 - [Test Case Selection Rationale](#test-case-selection-rationale)
-- [Performance test](#performance-test-scenarios)
+- [Performance test Scenarios](#performance-test-scenarios)
 
 ## Prerequisites
 
