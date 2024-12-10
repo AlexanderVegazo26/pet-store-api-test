@@ -8,15 +8,11 @@ import {
   deleteUserScenario
 } from "@scenarios/user/userManagement.scenario";
 
-import { http } from "@gatling.io/http";
+
 import { getEnvVar } from "@utils/config/environment";
+import { httpProtocol } from "@utils/config/setHttpProtocol";
 
 export default simulation((setUp) => {
-  const httpProtocol = http
-    .baseUrl("http://127.0.0.1:8080/api/v3")
-    .acceptHeader("application/json")
-    .contentTypeHeader("application/json");
-
   const userRampDuration = getEnvVar("USER_RAMP_DURATION", "5");
   const createUsers = getEnvVar("CREATE_USERS", "10");
   const readUsers = getEnvVar("READ_USERS", "20");
