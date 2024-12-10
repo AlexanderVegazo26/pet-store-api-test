@@ -1,0 +1,132 @@
+name: Functional Tests
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: "Test suite to run"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - pet
+          - store
+          - user
+      debug:
+        description: "Run in debug mode"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout Test Repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Swagger Petstore
+        uses: actions/checkout@v4
+        with:
+          repository: swagger-api/swagger-petstore
+          path: swagger-petstore
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: "8"
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: Build & Start Petstore
+        run: |
+          cd swagger-petstore
+          mvn clean package -DskipTests
+          docker build -t swaggerapi/petstore3:unstable .
+          docker run --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:unstable
+          timeout 60 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8080/api/v3/openapi.json)" != "200" ]]; do sleep 5; done' || false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install Dependencies
+        working-directory: ./api-test-automation
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      - name: Build
+        working-directory: ./api-test-automation
+        env:
+          NODE_OPTIONS: "-r tsconfig-paths/register"
+        run: |
+          npm run build
+          echo "Checking compiled files:"
+          ls -la dist/src/api || true
+          ls -la dist/tests || true
+
+      - name: Run API Tests
+        working-directory: ./api-test-automation
+        env:
+          NODE_OPTIONS: "-r tsconfig-paths/register"
+        run: npm run test
+
+      - name: Prepare Report Directory
+        run: |
+          # Create a directory structure for the reports
+          mkdir -p gh-pages/api-test-automation
+
+          # Copy the Playwright report to the api-test-automation subdirectory
+          cp -r api-test-automation/playwright-report/* gh-pages/api-test-automation/
+
+          echo "Checking prepared directory structure:"
+          ls -la gh-pages/api-test-automation/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: gh-pages
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print Report URL
+        run: |
+          echo "Functional Test Report will be available at:"
+          echo "https://alexandervegazo26.github.io/pet-store-api-test/api-test-automation/"
+
+      - name: Wait for GitHub Pages
+        run: sleep 30
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop swaggerapi-petstore3 || true
+          docker rm swaggerapi-petstore3 || true
+          docker image rm swaggerapi/petstore3:unstable || true
+          docker system prune -f
+
+concurrency:
+  group: "petstore-${{ github.ref }}"
+  cancel-in-progress: false
