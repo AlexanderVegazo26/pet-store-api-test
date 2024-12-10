@@ -26,6 +26,7 @@
     "pet-simulation": "tsc --noEmit && gatling run --typescript --simulation pet --sources-folder src/simulations",
     "store-simulation": "tsc --noEmit && gatling run --typescript --simulation store --sources-folder src/simulations",
     "user-simulation": "tsc --noEmit && gatling run --typescript --simulation user --sources-folder src/simulations",
+    "all-simulation-v2": " npm run clean && tsc --noEmit && gatling run --typescript --sources-folder src/simulations",
     "all-simulations": "npm run clean && npm run pet-simulation && npm run store-simulation && npm run user-simulation"
   }
 }

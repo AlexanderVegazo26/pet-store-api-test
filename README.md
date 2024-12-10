@@ -33,6 +33,12 @@ Before you begin, ensure you have the following installed:
 - Git
 - Maven
 
+## Stack used in this project
+
+- Playwright for API automation testing
+- Gatling for performance Testing
+- Typescript as the programming language for both projects
+
 ## Installation
 
 1. Clone the repository:
