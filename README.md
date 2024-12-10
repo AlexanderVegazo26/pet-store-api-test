@@ -19,8 +19,8 @@ Both test projects target the [Swagger Pet Store](https://github.com/swagger-api
 - [Running Tests](#running-tests)
 - [CI/CD Integration](#cicd-integration)
 - [Test Reports](#test-reports)
-- [Test Cases Functional](#test-cases)
-- [Test Case Selection Rationale](#test-case-selection-rationale)
+- [Functional Test Cases ](#functional-test-cases)
+- [Functional Test Case Selection Reason](#functional-test-case-selection-reason)
 - [Performance test Scenarios](#performance-test-scenarios)
 
 ## Prerequisites
@@ -551,7 +551,7 @@ The project includes GitHub Actions workflows for automated testing:
 - User is removed from system
 - Subsequent GET request returns 404
 
-## Fucntional Test Case Selection Rationale
+## Functional Test Case Selection Reason
 
 The test cases selected for this project represent the most critical paths and functionalities of the Pet Store API. Here's why these specific test cases are crucial:
 
