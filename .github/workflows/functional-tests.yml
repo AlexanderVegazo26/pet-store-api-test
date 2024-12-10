@@ -1,9 +1,9 @@
 name: Functional Tests
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: write # Allows the workflow to commit to the repository
+  pages: write # Required for publishing test reports to GitHub Pages
+  id-token: write # Required for deployment authentication
 
 on:
   push:
@@ -11,7 +11,6 @@ on:
     paths:
       - "api-test-automation/**"
       - ".github/workflows/functional-tests.yml"
-      - ".github/config.yml"
   workflow_dispatch:
     inputs:
       test_type:
@@ -24,13 +23,6 @@ on:
           - pet
           - store
           - user
-      environment:
-        description: "Target environment for tests"
-        required: true
-        default: "ci"
-        type: choice
-        options:
-          - ci
       debug:
         description: "Run in debug mode"
         required: false
@@ -48,36 +40,6 @@ jobs:
     steps:
       - name: Checkout Test Repository
         uses: actions/checkout@v4
-
-      - name: Install YQ
-        uses: mikefarah/yq@master
-        with:
-          cmd: --version
-
-      - name: Load Environment Configuration
-        id: config
-        run: |
-          CONFIG_PATH=".github/config.yml"
-          if [ ! -f "$CONFIG_PATH" ]; then
-            echo "Error: Configuration file not found at $CONFIG_PATH"
-            exit 1
-          fi
-
-          ENV="${{ github.event.inputs.environment || 'ci' }}"
-
-          echo "API_PROTOCOL=$(yq eval ".environments.${ENV}.api.protocol" $CONFIG_PATH)" >> $GITHUB_ENV
-          echo "API_HOST=$(yq eval ".environments.${ENV}.api.host" $CONFIG_PATH)" >> $GITHUB_ENV
-          echo "API_PORT=$(yq eval ".environments.${ENV}.api.port" $CONFIG_PATH)" >> $GITHUB_ENV
-          echo "API_BASE_PATH=$(yq eval ".environments.${ENV}.api.base_path" $CONFIG_PATH)" >> $GITHUB_ENV
-          echo "HEALTH_ENDPOINT=$(yq eval ".environments.${ENV}.api.health_endpoint" $CONFIG_PATH)" >> $GITHUB_ENV
-          echo "TIMEOUT_SECONDS=$(yq eval ".environments.${ENV}.test.timeout_seconds" $CONFIG_PATH)" >> $GITHUB_ENV
-          echo "HEALTH_CHECK_INTERVAL=$(yq eval ".environments.${ENV}.test.health_check_interval" $CONFIG_PATH)" >> $GITHUB_ENV
-
-          API_URL="$(yq eval ".environments.${ENV}.api.protocol" $CONFIG_PATH)://$(yq eval ".environments.${ENV}.api.host" $CONFIG_PATH):$(yq eval ".environments.${ENV}.api.port" $CONFIG_PATH)$(yq eval ".environments.${ENV}.api.base_path" $CONFIG_PATH)"
-          echo "API_URL=${API_URL}" >> $GITHUB_ENV
-
-          HEALTH_CHECK_URL="${API_URL}$(yq eval ".environments.${ENV}.api.health_endpoint" $CONFIG_PATH)"
-          echo "HEALTH_CHECK_URL=${HEALTH_CHECK_URL}" >> $GITHUB_ENV
 
       - name: Checkout Swagger Petstore
         uses: actions/checkout@v4
@@ -97,10 +59,9 @@ jobs:
           cd swagger-petstore
           mvn clean package -DskipTests
           docker build -t swaggerapi/petstore3:unstable .
-          docker run --name swaggerapi-petstore3 -d -p ${{ env.API_PORT }}:8080 swaggerapi/petstore3:unstable
-          timeout ${{ env.TIMEOUT_SECONDS }} bash -c \
-            'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' ${{ env.HEALTH_CHECK_URL }})" != "200" ]]; \
-            do sleep ${{ env.HEALTH_CHECK_INTERVAL }}; done' || false
+          docker run --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:unstable
+          # Wait for API readiness (60s timeout)
+          timeout 60 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8080/api/v3/openapi.json)" != "200" ]]; do sleep 5; done' || false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -118,8 +79,8 @@ jobs:
         env:
           NODE_OPTIONS: "-r tsconfig-paths/register"
         run: |
-          echo "API_URL=${{ env.API_URL }}" > .env
           npm run build
+          # Verify build artifacts
           echo "Checking compiled files:"
           ls -la dist/src/api || true
           ls -la dist/tests || true
@@ -137,6 +98,7 @@ jobs:
         id: prepare_report
         run: |
           mkdir -p gh-pages/api-test-automation
+
           TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
           cat > gh-pages/api-test-automation/index.html << EOF
@@ -196,6 +158,10 @@ jobs:
               ls -la api-test-automation/
               exit 1
           fi
+
+          echo "Final directory structure:"
+          ls -la gh-pages/api-test-automation/
+          ls -la gh-pages/api-test-automation/report/ || echo "Report directory is empty"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

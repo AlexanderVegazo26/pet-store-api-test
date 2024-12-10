@@ -8,17 +8,16 @@ import {
   deleteUserScenario
 } from "@scenarios/user/userManagement.scenario";
 
-
 import { getEnvVar } from "@utils/config/environment";
 import { httpProtocol } from "@utils/config/setHttpProtocol";
 
 export default simulation((setUp) => {
-  const userRampDuration = getEnvVar("USER_RAMP_DURATION", "5");
-  const createUsers = getEnvVar("CREATE_USERS", "10");
-  const readUsers = getEnvVar("READ_USERS", "20");
-  const updateUsers = getEnvVar("UPDATE_USERS", "8");
-  const deleteUsers = getEnvVar("DELETE_USERS", "5");
-  const authUsers = getEnvVar("AUTH_USERS", "25");
+  const userRampDuration = getEnvVar("USER_RAMP_DURATION", "100");
+  const createUsers = getEnvVar("CREATE_USERS", "100");
+  const readUsers = getEnvVar("READ_USERS", "100");
+  const updateUsers = getEnvVar("UPDATE_USERS", "100");
+  const deleteUsers = getEnvVar("DELETE_USERS", "100");
+  const authUsers = getEnvVar("AUTH_USERS", "100");
 
   setUp(
     createUserScenario().injectOpen(rampUsers(createUsers).during(userRampDuration)),

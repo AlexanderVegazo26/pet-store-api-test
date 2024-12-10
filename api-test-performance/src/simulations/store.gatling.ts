@@ -10,11 +10,11 @@ import { getEnvVar } from "@utils/config/environment";
 import { httpProtocol } from "@utils/config/setHttpProtocol";
 
 export default simulation((setUp) => {
-  const orderRampDuration = getEnvVar("ORDER_RAMP_DURATION", "5");
-  const createOrders = getEnvVar("CREATE_ORDERS", "10");
-  const readOrders = getEnvVar("READ_ORDERS", "20");
-  const deleteOrders = getEnvVar("DELETE_ORDERS", "5");
-  const readInventory = getEnvVar("READ_INVENTORY", "15");
+  const orderRampDuration = getEnvVar("ORDER_RAMP_DURATION", "100");
+  const createOrders = getEnvVar("CREATE_ORDERS", "100");
+  const readOrders = getEnvVar("READ_ORDERS", "100");
+  const deleteOrders = getEnvVar("DELETE_ORDERS", "100");
+  const readInventory = getEnvVar("READ_INVENTORY", "100");
 
   setUp(
     placeOrderScenario().injectOpen(rampUsers(createOrders).during(orderRampDuration)),

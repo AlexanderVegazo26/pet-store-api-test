@@ -6,9 +6,9 @@ import { createPetScenario, updatePetScenario } from "@scenarios/pet/petManageme
 import { httpProtocol } from "@utils/config/setHttpProtocol";
 
 export default simulation((setUp) => {
-  const petRampDuration = getEnvVar("PET_RAMP_DURATION", "5");
-  const createPets = getEnvVar("CREATE_PETS", "10");
-  const readPets = getEnvVar("READ_PETS", "20");
+  const petRampDuration = getEnvVar("PET_RAMP_DURATION", "100");
+  const createPets = getEnvVar("CREATE_PETS", "100");
+  const readPets = getEnvVar("READ_PETS", "100");
 
   setUp(
     createPetScenario().injectOpen(rampUsers(createPets).during(petRampDuration)),
