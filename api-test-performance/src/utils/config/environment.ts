@@ -1,4 +1,3 @@
-// src/utils/config/environment.ts
 export const getEnvVar = (name: string, defaultValue: string): number => {
   try {
     // @ts-ignore
