@@ -11,22 +11,28 @@ test.describe("User Endpoints", () => {
     userApi = new UserApi(request);
   });
 
-  test("should create a new user", async () => {
-    const user: User = DataGenerator.generateUser();
-    const createUserResponse = await userApi.createUser(user);
+  test(
+    "should create a new user",
+    {
+      tag: ["@smoke"],
+    },
+    async () => {
+      const user: User = DataGenerator.generateUser();
+      const createUserResponse = await userApi.createUser(user);
 
-    expect(createUserResponse.status()).toBe(200);
+      expect(createUserResponse.status()).toBe(200);
 
-    const getUserResponse = await userApi.getUserByUsername(user.username);
-    const getUserResponseParsed = await XmlHelper.parseXmlResponse<{
-      User: User;
-    }>(getUserResponse);
+      const getUserResponse = await userApi.getUserByUsername(user.username);
+      const getUserResponseParsed = await XmlHelper.parseXmlResponse<{
+        User: User;
+      }>(getUserResponse);
 
-    expect(getUserResponseParsed.User).toMatchObject({
-      username: user.username,
-      email: user.email,
-    });
-  });
+      expect(getUserResponseParsed.User).toMatchObject({
+        username: user.username,
+        email: user.email,
+      });
+    }
+  );
 
   test("should create multiple users", async () => {
     const users: User[] = DataGenerator.generateUsers(5);
@@ -40,63 +46,87 @@ test.describe("User Endpoints", () => {
     }
   });
 
-  test("should login user", async () => {
-    const user = DataGenerator.generateUser();
-    await userApi.createUser(user);
-    const loginResponse = await userApi.login(user.username, user.password);
-    expect(loginResponse.status()).toBe(200);
-  });
+  test(
+    "should login user",
+    {
+      tag: ["@smoke"],
+    },
+    async () => {
+      const user = DataGenerator.generateUser();
+      await userApi.createUser(user);
+      const loginResponse = await userApi.login(user.username, user.password);
+      expect(loginResponse.status()).toBe(200);
+    }
+  );
 
-  test("should logout user", async () => {
-    const user = DataGenerator.generateUser();
-    await userApi.createUser(user);
-    const loginResponse = await userApi.login(user.username, user.password);
-    expect(loginResponse.status()).toBe(200);
+  test(
+    "should logout user",
+    {
+      tag: ["@smoke"],
+    },
+    async () => {
+      const user = DataGenerator.generateUser();
+      await userApi.createUser(user);
+      const loginResponse = await userApi.login(user.username, user.password);
+      expect(loginResponse.status()).toBe(200);
 
-    const logoutResponse = await userApi.logout();
-    expect(logoutResponse.status()).toBe(200);
-  });
+      const logoutResponse = await userApi.logout();
+      expect(logoutResponse.status()).toBe(200);
+    }
+  );
 
-  test("should get user by username", async () => {
-    const user = DataGenerator.generateUser();
-    await userApi.createUser(user);
+  test(
+    "should get user by username",
+    {
+      tag: ["@smoke"],
+    },
+    async () => {
+      const user = DataGenerator.generateUser();
+      await userApi.createUser(user);
 
-    const getUserResponse = await userApi.getUserByUsername(user.username);
-    expect(getUserResponse.status()).toBe(200);
+      const getUserResponse = await userApi.getUserByUsername(user.username);
+      expect(getUserResponse.status()).toBe(200);
 
-    const getUserResponseParsed = await XmlHelper.parseXmlResponse<{
-      User: User;
-    }>(getUserResponse);
+      const getUserResponseParsed = await XmlHelper.parseXmlResponse<{
+        User: User;
+      }>(getUserResponse);
 
-    expect(getUserResponseParsed.User).toMatchObject({
-      ...user,
-    });
-  });
+      expect(getUserResponseParsed.User).toMatchObject({
+        ...user,
+      });
+    }
+  );
 
-  test("should update user", async () => {
-    const user = DataGenerator.generateUser();
-    await userApi.createUser(user);
+  test(
+    "should update user",
+    {
+      tag: ["@smoke"],
+    },
+    async () => {
+      const user = DataGenerator.generateUser();
+      await userApi.createUser(user);
 
-    const userDataToUpdate: Partial<User> = {
-      firstName: "UpdatedFirstName",
-      email: "updated@updated.com",
-    };
+      const userDataToUpdate: Partial<User> = {
+        firstName: "UpdatedFirstName",
+        email: "updated@updated.com",
+      };
 
-    const updatedUser: Partial<User> = { ...user, ...userDataToUpdate };
+      const updatedUser: Partial<User> = { ...user, ...userDataToUpdate };
 
-    const updateUserResponse = await userApi.updateUser(
-      user.username,
-      updatedUser
-    );
-    expect(updateUserResponse.status()).toBe(200);
+      const updateUserResponse = await userApi.updateUser(
+        user.username,
+        updatedUser
+      );
+      expect(updateUserResponse.status()).toBe(200);
 
-    const getUserResponse = await userApi.getUserByUsername(user.username);
-    const getUserResponseParsed = await XmlHelper.parseXmlResponse<{
-      User: User;
-    }>(getUserResponse);
+      const getUserResponse = await userApi.getUserByUsername(user.username);
+      const getUserResponseParsed = await XmlHelper.parseXmlResponse<{
+        User: User;
+      }>(getUserResponse);
 
-    expect(getUserResponseParsed.User).toMatchObject({
-      ...updatedUser,
-    });
-  });
+      expect(getUserResponseParsed.User).toMatchObject({
+        ...updatedUser,
+      });
+    }
+  );
 });

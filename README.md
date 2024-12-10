@@ -118,6 +118,11 @@ From the `api-test-automation` directory:
 npm run test
 ```
 
+```bash
+# Run most critical tests, those we usually execute on an smoke test
+npm run test:smoke
+```
+
 ### Running Performance Tests
 
 From the `api-test-performance` directory:

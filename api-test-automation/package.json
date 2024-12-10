@@ -6,6 +6,7 @@
     "build": "tsc",
     "prebuild": "npm run clean",
     "test": "npx playwright test",
+    "test:smoke": "npx playwright test --grep @smoke",
     "test:register": "NODE_OPTIONS='-r tsconfig-paths/register' playwright test",
     "test:debug": "NODE_OPTIONS='-r tsconfig-paths/register' playwright test --debug",
     "test:ui": "NODE_OPTIONS='-r tsconfig-paths/register' playwright test --ui",

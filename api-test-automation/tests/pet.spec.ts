@@ -12,95 +12,121 @@ test.describe("Pet store API positive Tests", () => {
     petApi = new PetApi(request);
   });
 
-  test("should create a new pet", async () => {
-    const pet: Pet = DataGenerator.generatePet();
-    const createPetResponse = await petApi.createPet(pet);
+  test(
+    "should create a new pet",
+    {
+      tag: ["@smoke"],
+    },
+    async () => {
+      const pet: Pet = DataGenerator.generatePet();
+      const createPetResponse = await petApi.createPet(pet);
 
-    expect(createPetResponse.status()).toBe(200); //bug: It should be 201 for post creation
-    const createPetResponseParsed = (
-      await XmlHelper.parseXmlResponse<{
-        Pet: Pet;
-      }>(createPetResponse)
-    ).Pet;
+      expect(createPetResponse.status()).toBe(200); //bug: It should be 201 for post creation
+      const createPetResponseParsed = (
+        await XmlHelper.parseXmlResponse<{
+          Pet: Pet;
+        }>(createPetResponse)
+      ).Pet;
 
-    expect(createPetResponseParsed).toMatchObject({
-      id: pet.id,
-      name: pet.name,
-      category: {
-        id: pet.category?.id,
-        name: pet.category?.name,
-      },
-      photoUrls: {
-        photoUrl: pet.photoUrls[0],
-      },
-      tags: {
-        tag: {
-          id: pet.tags?.[0].id,
-          name: pet.tags?.[0].name,
-        },
-      },
-      status: pet.status,
-    });
-  });
-
-  test("should update an existing pet", async () => {
-    const pet: Pet = DataGenerator.generatePet();
-    await petApi.createPet(pet);
-
-    const updatedPet: Pet = {
-      ...pet,
-      name: "Updated " + pet.name,
-      status: PetStatus.SOLD,
-    };
-
-    const updateResponse = await petApi.updatePet(updatedPet);
-    expect(updateResponse.status()).toBe(200);
-
-    const getPetResponse = await petApi.getPetById(pet.id);
-    const getPetResponseParsed = (
-      await XmlHelper.parseXmlResponse<{
-        Pet: Pet;
-      }>(getPetResponse)
-    ).Pet;
-
-    expect(getPetResponseParsed).toMatchObject({
-      id: updatedPet.id,
-      name: updatedPet.name,
-      status: updatedPet.status,
-    });
-  });
-
-  test("should delete an existing pet", async () => {
-    const pet: Pet = DataGenerator.generatePet();
-    await petApi.createPet(pet);
-
-    const deleteResponse = await petApi.deletePet(pet.id);
-    expect(deleteResponse.status()).toBe(200);
-
-    const getPetAfterDeleteResponse = await petApi.getPetById(pet.id);
-    expect(getPetAfterDeleteResponse.status()).toBe(404);
-  });
-
-  test("should find pets by status", async () => {
-    const pet: Pet = DataGenerator.generatePet();
-    await petApi.createPet(pet);
-
-    const getPetByStatusResponse = await petApi.getPetByStatus(
-      PetStatus.AVAILABLE
-    );
-    expect(getPetByStatusResponse.status()).toBe(200);
-
-    const getPetByStatusResponseParsed = (
-      await XmlHelper.parseXmlResponse<PetListResponse>(getPetByStatusResponse)
-    ).ArrayList.item;
-
-    expect(getPetByStatusResponseParsed).toContainEqual(
-      expect.objectContaining({
+      expect(createPetResponseParsed).toMatchObject({
         id: pet.id,
-        status: PetStatus.AVAILABLE,
-      })
-    );
-  });
+        name: pet.name,
+        category: {
+          id: pet.category?.id,
+          name: pet.category?.name,
+        },
+        photoUrls: {
+          photoUrl: pet.photoUrls[0],
+        },
+        tags: {
+          tag: {
+            id: pet.tags?.[0].id,
+            name: pet.tags?.[0].name,
+          },
+        },
+        status: pet.status,
+      });
+    }
+  );
+
+  test(
+    "should update an existing pet",
+    {
+      tag: ["@smoke"],
+    },
+    async () => {
+      const pet: Pet = DataGenerator.generatePet();
+      await petApi.createPet(pet);
+
+      const updatedPet: Pet = {
+        ...pet,
+        name: "Updated " + pet.name,
+        status: PetStatus.SOLD,
+      };
+
+      const updateResponse = await petApi.updatePet(updatedPet);
+      expect(updateResponse.status()).toBe(200);
+
+      const getPetResponse = await petApi.getPetById(pet.id);
+      const getPetResponseParsed = (
+        await XmlHelper.parseXmlResponse<{
+          Pet: Pet;
+        }>(getPetResponse)
+      ).Pet;
+
+      expect(getPetResponseParsed).toMatchObject({
+        id: updatedPet.id,
+        name: updatedPet.name,
+        status: updatedPet.status,
+      });
+    }
+  );
+
+  test(
+    "should delete an existing pet",
+    {
+      tag: ["@smoke"],
+    },
+    async () => {
+      const pet: Pet = DataGenerator.generatePet();
+      await petApi.createPet(pet);
+
+      const deleteResponse = await petApi.deletePet(pet.id);
+      expect(deleteResponse.status()).toBe(200);
+
+      const getPetAfterDeleteResponse = await petApi.getPetById(pet.id);
+      expect(getPetAfterDeleteResponse.status()).toBe(404);
+    }
+  );
+
+  test(
+    "should find pets by status",
+    {
+      tag: ["@smoke"],
+    },
+    async () => {
+      const pet: Pet = DataGenerator.generatePet();
+      await petApi.createPet(pet);
+
+      const getPetByStatusResponse = await petApi.getPetByStatus(
+        PetStatus.AVAILABLE
+      );
+      expect(getPetByStatusResponse.status()).toBe(200);
+
+      const getPetByStatusResponseParsed = (
+        await XmlHelper.parseXmlResponse<PetListResponse>(
+          getPetByStatusResponse
+        )
+      ).ArrayList.item;
+
+      expect(getPetByStatusResponseParsed).toContainEqual(
+        expect.objectContaining({
+          id: pet.id,
+          status: PetStatus.AVAILABLE,
+        })
+      );
+    }
+  );
 
   test("should handle invalid pet creation", async () => {
     const invalidPet = {} as Pet;
