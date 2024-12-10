@@ -1,10 +1,14 @@
+# This workflow runs performance tests for the Pet Store API using Gatling
+# It can run all tests or specific test suites (pet, store, user) and publishes results to GitHub Pages
 name: Performance Tests
 
+# Define required permissions for GitHub Actions
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: write # Needed for checking out code
+  pages: write # Required for publishing test reports
+  id-token: write # Required for deployment authentication
 
+# Configure when the workflow should run
 on:
   push:
     branches: ["main"]
@@ -40,15 +44,18 @@ jobs:
       REPORT_PATH: ""
 
     steps:
+      # Step 1: Check out the test repository containing our performance tests
       - name: Checkout Test Repository
         uses: actions/checkout@v4
 
+      # Step 2: Check out the Swagger Petstore application that we'll be testing
       - name: Checkout Swagger Petstore
         uses: actions/checkout@v4
         with:
           repository: swagger-api/swagger-petstore
           path: swagger-petstore
 
+      # Step 3: Set up Java environment for running the Petstore application
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
@@ -56,52 +63,65 @@ jobs:
           distribution: "temurin"
           cache: "maven"
 
+      # Step 4: Build and start the Petstore application in a Docker container
       - name: Build & Start Petstore
         run: |
           cd swagger-petstore
           mvn clean package -DskipTests
           docker build -t swaggerapi/petstore3:unstable .
           docker run --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:unstable
+          # Wait for the application to be ready (timeout after 60 seconds)
           timeout 60 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8080/api/v3/openapi.json)" != "200" ]]; do sleep 5; done' || false
 
+      # Step 5: Set up Node.js environment for running Gatling tests
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
 
+      # Step 6: Install project dependencies
       - name: Install Dependencies
         working-directory: ./api-test-performance
         run: npm ci
 
+      # Step 7: Configure test parameters based on package.conf settings
       - name: Set Test Configuration
         working-directory: ./api-test-performance
         run: |
-          echo "# Pet simulation variables
-          PET_RAMP_DURATION=5
-          CREATE_PETS=10
-          READ_PETS=20
+          cat > .env << EOF
+          # Global simulation settings from package.conf
+          RAMP_UP_DURATION=60
+          RAMP_DOWN_DURATION=30
+
+          # Pet simulation variables
+          PET_RAMP_DURATION=60
+          CREATE_PETS=100
+          READ_PETS=200
 
           # Store simulation variables
-          ORDER_RAMP_DURATION=5
-          CREATE_ORDERS=10
-          READ_ORDERS=20
-          DELETE_ORDERS=5
-          READ_INVENTORY=15
+          ORDER_RAMP_DURATION=60
+          CREATE_ORDERS=150
+          READ_ORDERS=300
+          DELETE_ORDERS=50
+          READ_INVENTORY=200
 
           # User simulation variables
-          USER_RAMP_DURATION=5
-          CREATE_USERS=10
-          READ_USERS=20
-          UPDATE_USERS=8
-          DELETE_USERS=5
-          AUTH_USERS=25" > .env
+          USER_RAMP_DURATION=60
+          CREATE_USERS=80
+          READ_USERS=160
+          UPDATE_USERS=64
+          DELETE_USERS=40
+          AUTH_USERS=200
+          EOF
 
+          # Export all non-comment lines to GitHub Actions environment
           while IFS= read -r line || [[ -n "$line" ]]; do
             if [[ ! "$line" =~ ^#.*$ ]] && [[ ! -z "$line" ]]; then
               echo "$line" >> $GITHUB_ENV
             fi
           done < .env
 
+      # Step 8: Execute the performance tests based on the selected test type
       - name: Run Performance Tests
         working-directory: ./api-test-performance
         run: |
@@ -116,10 +136,11 @@ jobs:
             npm run all-simulations
           fi
 
+      # Step 9: Prepare the test reports for publication
       - name: Prepare Report Directory
         id: prepare_report
         run: |
-          # Create the base directory structure
+          # Create the base directory structure for GitHub Pages
           mkdir -p gh-pages/api-test-performance
 
           # Find and sort simulation directories in reverse order (newest first)
@@ -133,7 +154,7 @@ jobs:
           # Create an array to store simulation names
           declare -a sim_names
 
-          # Create the index.html file header
+          # Create an index.html file with styling and structure
           cat > gh-pages/api-test-performance/index.html << EOF
           <!DOCTYPE html>
           <html>
@@ -158,62 +179,68 @@ jobs:
             <ul>
           EOF
 
-          # Process each simulation directory
+          # Process each simulation directory and add it to the index
           for sim in $SIMS; do
             SIM_NAME=$(basename "$sim")
-            # Copy the simulation directory
+            # Copy the simulation directory to the pages directory
             cp -r "$sim" "gh-pages/api-test-performance/"
             sim_names+=("$SIM_NAME")
             
-            # Extract timestamp for display
+            # Extract and format timestamp for display
             TIMESTAMP=$(echo $SIM_NAME | grep -o "[0-9]\{14\}")
             FORMATTED_TIME=$(date -d "${TIMESTAMP:0:8} ${TIMESTAMP:8:2}:${TIMESTAMP:10:2}:${TIMESTAMP:12:2}" "+%H:%M:%S")
 
-            # Determine simulation type from simulation.log
+            # Determine simulation type from the simulation log
             if grep -q "createPet\|findPetsByStatus" "$sim/simulation.log" 2>/dev/null; then
-              DISPLAY_NAME="Pet"
+              DISPLAY_NAME="Pet Management Test Suite"
             elif grep -q "placeOrder\|getInventory" "$sim/simulation.log" 2>/dev/null; then
-              DISPLAY_NAME="Store"
+              DISPLAY_NAME="Store Operations Test Suite"
             elif grep -q "createUser\|loginUser" "$sim/simulation.log" 2>/dev/null; then
-              DISPLAY_NAME="User"
+              DISPLAY_NAME="User Management Test Suite"
             else
-              DISPLAY_NAME="Unknown"
+              DISPLAY_NAME="Unknown Test Suite"
             fi
 
             # Add entry to index.html with clean name and timestamp
             echo "<li><a href='./${SIM_NAME}/index.html'>${DISPLAY_NAME}</a><span class='timestamp'>${FORMATTED_TIME}</span></li>" >> gh-pages/api-test-performance/index.html
           done
 
-          # Close the HTML file
+          # Close the HTML document
           echo "</ul></body></html>" >> gh-pages/api-test-performance/index.html
 
-          # Save the first simulation name for the Print Report URL step
+          # Save the first simulation name for the report URL
           echo "simulation_name=${sim_names[0]}" >> "$GITHUB_OUTPUT"
           echo "All simulations processed successfully"
 
+      # Step 10: Configure GitHub Pages for report publishing
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      # Step 11: Upload the generated reports as a GitHub Pages artifact
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: gh-pages
 
+      # Step 12: Deploy the reports to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # Step 13: Output the URLs where reports can be accessed
       - name: Print Report URLs
         run: |
           echo "Performance Test Reports will be available at:"
           echo "Main index: https://alexandervegazo26.github.io/pet-store-api-test/api-test-performance/"
           echo "Latest report: https://alexandervegazo26.github.io/pet-store-api-test/api-test-performance/${{ steps.prepare_report.outputs.simulation_name }}"
 
+      # Step 14: Wait for GitHub Pages deployment to complete
       - name: Wait for GitHub Pages
         run: sleep 30
 
+      # Step 15: Clean up Docker resources
       - name: Cleanup
         if: always()
         run: |
@@ -222,6 +249,7 @@ jobs:
           docker image rm swaggerapi/petstore3:unstable || true
           docker system prune -f
 
+# Configure concurrent workflow runs
 concurrency:
   group: "petstore-${{ github.ref }}"
   cancel-in-progress: false
