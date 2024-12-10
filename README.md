@@ -33,10 +33,10 @@ Before you begin, ensure you have the following installed:
 - Git
 - Maven
 
-## Stack used in this project
+## Stack used in this project (main tools)
 
-- Playwright for API automation testing
-- Gatling for performance Testing
+- Playwright `v1.49.0` (for API automation testing)
+- Gatling  `3.13.103` (for performance Testing)
 - Typescript as the programming language for both projects
 
 ## Installation
