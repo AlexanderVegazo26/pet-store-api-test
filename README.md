@@ -150,6 +150,15 @@ The project includes GitHub Actions workflows for automated testing:
 - Generates and publishes performance reports
 - Available at: `https://alexandervegazo26.github.io/pet-store-api-test/api-test-performance/`
 
+### Manual Execution from Github actions
+
+In `Actions` tab in github, you can manually run the workflows:
+
+1. `Functional Tests`
+2. `Performance Tests`
+
+Once you click the workflow you want to execute manually, you can go to `Run Workflow` and click on the green button with the same name (`Run Workflow`).
+
 ## Test Reports
 
 ### Functional Test Reports
