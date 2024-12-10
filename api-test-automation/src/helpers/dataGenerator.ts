@@ -44,7 +44,7 @@ export class DataGenerator {
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
     const username = faker.internet
-      .userName({ firstName, lastName })
+      .username({ firstName, lastName })
       .toLowerCase();
 
     return {

@@ -5,7 +5,7 @@ import { DataGenerator } from "@helpers/dataGenerator";
 import { XmlHelper } from "@helpers/xmlhelper";
 import { test, expect } from "@playwright/test";
 
-test.describe("Pet store API positive Tests", () => {
+test.describe("Pet store API Tests", () => {
   let petApi: PetApi;
 
   test.beforeEach(async ({ request }) => {
