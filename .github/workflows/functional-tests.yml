@@ -1,10 +1,15 @@
+# This workflow executes functional tests for the Pet Store API using Playwright
+# It can run all test suites or specific ones (pet, store, user) and publishes results to GitHub Pages
 name: Functional Tests
 
+# Define the required permissions for GitHub Actions
+# These permissions are necessary for checking out code, publishing test reports, and deployment
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: write # Allows the workflow to commit to the repository
+  pages: write # Required for publishing test reports to GitHub Pages
+  id-token: write # Required for deployment authentication
 
+# Configure when the workflow should run
 on:
   push:
     branches: ["main"]
@@ -38,15 +43,18 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
+      # Step 1: Check out the test repository containing our automation tests
       - name: Checkout Test Repository
         uses: actions/checkout@v4
 
+      # Step 2: Check out the Swagger Petstore application that we'll be testing
       - name: Checkout Swagger Petstore
         uses: actions/checkout@v4
         with:
           repository: swagger-api/swagger-petstore
           path: swagger-petstore
 
+      # Step 3: Set up Java environment for running the Petstore application
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
@@ -54,74 +62,158 @@ jobs:
           distribution: "temurin"
           cache: "maven"
 
+      # Step 4: Build and start the Petstore application in a Docker container
       - name: Build & Start Petstore
         run: |
           cd swagger-petstore
           mvn clean package -DskipTests
           docker build -t swaggerapi/petstore3:unstable .
           docker run --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:unstable
+          # Wait for the application to be ready (timeout after 60 seconds)
           timeout 60 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8080/api/v3/openapi.json)" != "200" ]]; do sleep 5; done' || false
 
+      # Step 5: Set up Node.js environment for running Playwright tests
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
 
+      # Step 6: Install project dependencies and Playwright
       - name: Install Dependencies
         working-directory: ./api-test-automation
         run: |
           npm ci
           npx playwright install --with-deps
 
+      # Step 7: Build the TypeScript project
       - name: Build
         working-directory: ./api-test-automation
         env:
           NODE_OPTIONS: "-r tsconfig-paths/register"
         run: |
           npm run build
+          # Verify the build output
           echo "Checking compiled files:"
           ls -la dist/src/api || true
           ls -la dist/tests || true
 
+      # Step 8: Execute the API tests
       - name: Run API Tests
         working-directory: ./api-test-automation
         env:
           NODE_OPTIONS: "-r tsconfig-paths/register"
-        run: npm run test
-
-      - name: Prepare Report Directory
         run: |
-          # Create a directory structure for the reports
+          # Clean the report directory before running tests
+          rm -rf playwright-report
+          mkdir playwright-report
+
+          # Run the tests and generate HTML report
+          npm run test
+
+      # Step 9: Prepare the test reports for publication
+      - name: Prepare Report Directory
+        id: prepare_report
+        run: |
+          # Create the base directory structure
           mkdir -p gh-pages/api-test-automation
 
-          # Copy the Playwright report to the api-test-automation subdirectory
-          cp -r api-test-automation/playwright-report/* gh-pages/api-test-automation/
+          # Get current timestamp for the report
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
-          echo "Checking prepared directory structure:"
+          # Create an index page with navigation and styling
+          cat > gh-pages/api-test-automation/index.html << EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>API Test Automation Reports</title>
+              <style>
+                  body { 
+                      font-family: Arial, sans-serif; 
+                      margin: 40px;
+                      line-height: 1.6;
+                  }
+                  h1 { 
+                      color: #333;
+                      border-bottom: 2px solid #eee;
+                      padding-bottom: 10px;
+                  }
+                  .latest-report {
+                      margin: 20px 0;
+                      padding: 20px;
+                      background-color: #f8f9fa;
+                      border-radius: 8px;
+                      border: 1px solid #e9ecef;
+                  }
+                  .timestamp {
+                      color: #666;
+                      font-size: 0.9em;
+                      margin-left: 10px;
+                  }
+                  a {
+                      color: #0366d6;
+                      text-decoration: none;
+                      font-weight: 500;
+                  }
+                  a:hover {
+                      text-decoration: underline;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>API Test Automation Reports</h1>
+              <div class="latest-report">
+                  <h2>Latest Test Results <span class="timestamp">${TIMESTAMP}</span></h2>
+                  <p><a href="./report/index.html">View Detailed Test Report →</a></p>
+              </div>
+          </body>
+          </html>
+          EOF
+
+          # Create report directory and copy the Playwright report
+          mkdir -p gh-pages/api-test-automation/report
+          if [ -d "api-test-automation/playwright-report" ]; then
+              cp -r api-test-automation/playwright-report/* gh-pages/api-test-automation/report/
+              echo "Report files copied successfully"
+          else
+              echo "Error: Playwright report directory not found"
+              ls -la api-test-automation/
+              exit 1
+          fi
+
+          # Verify the final directory structure
+          echo "Final directory structure:"
           ls -la gh-pages/api-test-automation/
+          ls -la gh-pages/api-test-automation/report/ || echo "Report directory is empty"
 
+      # Step 10: Configure GitHub Pages for report publishing
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      # Step 11: Upload the generated reports as a GitHub Pages artifact
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: gh-pages
 
+      # Step 12: Deploy the reports to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Print Report URL
+      # Step 13: Output the URLs where reports can be accessed
+      - name: Print Report URLs
         run: |
-          echo "Functional Test Report will be available at:"
-          echo "https://alexandervegazo26.github.io/pet-store-api-test/api-test-automation/"
+          echo "API Test Automation Reports will be available at:"
+          echo "Main index: https://alexandervegazo26.github.io/pet-store-api-test/api-test-automation/"
+          echo "Latest report: https://alexandervegazo26.github.io/pet-store-api-test/api-test-automation/report/"
 
+      # Step 14: Wait for GitHub Pages deployment to complete
       - name: Wait for GitHub Pages
         run: sleep 30
 
+      # Step 15: Clean up Docker resources
       - name: Cleanup
         if: always()
         run: |
@@ -130,6 +222,7 @@ jobs:
           docker image rm swaggerapi/petstore3:unstable || true
           docker system prune -f
 
+# Configure concurrent workflow runs
 concurrency:
   group: "petstore-${{ github.ref }}"
   cancel-in-progress: false
