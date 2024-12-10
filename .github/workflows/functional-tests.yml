@@ -8,6 +8,9 @@ permissions:
 on:
   push:
     branches: ["main"]
+    paths:
+      - "api-test-automation/**"
+      - ".github/workflows/functional-test.yml"
   workflow_dispatch:
     inputs:
       test_type:

@@ -8,6 +8,9 @@ permissions:
 on:
   push:
     branches: ["main"]
+    paths:
+      - "api-test-performance/**"
+      - ".github/workflows/performance-test.yml"
   workflow_dispatch:
     inputs:
       test_type:
@@ -119,7 +122,7 @@ jobs:
           # Create the base directory structure
           mkdir -p gh-pages/api-test-performance
 
-          # Find all simulation directories
+          # Find and sort simulation directories in reverse order (newest first)
           SIMS=$(find "api-test-performance/target/gatling" -maxdepth 1 -type d -name "jssimulation-*" | sort -r)
 
           if [ -z "$SIMS" ]; then
@@ -130,19 +133,7 @@ jobs:
           # Create an array to store simulation names
           declare -a sim_names
 
-          # Copy each simulation directory and collect names
-          for sim in $SIMS; do
-            SIM_NAME=$(basename "$sim")
-            echo "Processing simulation: $SIM_NAME"
-            
-            # Copy the simulation directory
-            cp -r "$sim" "gh-pages/api-test-performance/"
-            
-            # Add to array
-            sim_names+=("$SIM_NAME")
-          done
-
-          # Create an index.html file to list all reports
+          # Create the index.html file header
           cat > gh-pages/api-test-performance/index.html << EOF
           <!DOCTYPE html>
           <html>
@@ -155,6 +146,11 @@ jobs:
               li { margin: 10px 0; }
               a { color: #0366d6; text-decoration: none; }
               a:hover { text-decoration: underline; }
+              .timestamp { 
+                color: #666;
+                font-size: 0.9em;
+                margin-left: 10px;
+              }
             </style>
           </head>
           <body>
@@ -162,9 +158,30 @@ jobs:
             <ul>
           EOF
 
-          # Add links for each simulation
-          for sim in "${sim_names[@]}"; do
-            echo "<li><a href='./$sim/index.html'>$sim</a></li>" >> gh-pages/api-test-performance/index.html
+          # Process each simulation directory
+          for sim in $SIMS; do
+            SIM_NAME=$(basename "$sim")
+            # Copy the simulation directory
+            cp -r "$sim" "gh-pages/api-test-performance/"
+            sim_names+=("$SIM_NAME")
+            
+            # Extract timestamp for display
+            TIMESTAMP=$(echo $SIM_NAME | grep -o "[0-9]\{14\}")
+            FORMATTED_TIME=$(date -d "${TIMESTAMP:0:8} ${TIMESTAMP:8:2}:${TIMESTAMP:10:2}:${TIMESTAMP:12:2}" "+%H:%M:%S")
+
+            # Determine simulation type from simulation.log
+            if grep -q "createPet\|findPetsByStatus" "$sim/simulation.log" 2>/dev/null; then
+              DISPLAY_NAME="Pet"
+            elif grep -q "placeOrder\|getInventory" "$sim/simulation.log" 2>/dev/null; then
+              DISPLAY_NAME="Store"
+            elif grep -q "createUser\|loginUser" "$sim/simulation.log" 2>/dev/null; then
+              DISPLAY_NAME="User"
+            else
+              DISPLAY_NAME="Unknown"
+            fi
+
+            # Add entry to index.html with clean name and timestamp
+            echo "<li><a href='./${SIM_NAME}/index.html'>${DISPLAY_NAME}</a><span class='timestamp'>${FORMATTED_TIME}</span></li>" >> gh-pages/api-test-performance/index.html
           done
 
           # Close the HTML file
