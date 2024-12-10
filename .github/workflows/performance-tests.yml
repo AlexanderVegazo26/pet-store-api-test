@@ -93,7 +93,6 @@ jobs:
           DELETE_USERS=5
           AUTH_USERS=25" > .env
 
-          # Make environment variables available
           while IFS= read -r line || [[ -n "$line" ]]; do
             if [[ ! "$line" =~ ^#.*$ ]] && [[ ! -z "$line" ]]; then
               echo "$line" >> $GITHUB_ENV
@@ -120,32 +119,60 @@ jobs:
           # Create the base directory structure
           mkdir -p gh-pages/api-test-performance
 
-          # Find the latest simulation directory
-          LATEST_SIM=$(find "api-test-performance/target/gatling" -maxdepth 1 -type d -name "jssimulation-*" | sort -r | head -n 1)
+          # Find all simulation directories
+          SIMS=$(find "api-test-performance/target/gatling" -maxdepth 1 -type d -name "jssimulation-*" | sort -r)
 
-          if [ -z "$LATEST_SIM" ]; then
-            echo "Error: No simulation directory found"
+          if [ -z "$SIMS" ]; then
+            echo "Error: No simulation directories found"
             exit 1
           fi
 
-          # Get the simulation name
-          SIM_NAME=$(basename "$LATEST_SIM")
-          echo "Latest simulation: $SIM_NAME"
+          # Create an array to store simulation names
+          declare -a sim_names
 
-          # Copy the entire simulation directory to the performance test directory
-          cp -r "$LATEST_SIM" "gh-pages/api-test-performance/"
+          # Copy each simulation directory and collect names
+          for sim in $SIMS; do
+            SIM_NAME=$(basename "$sim")
+            echo "Processing simulation: $SIM_NAME"
+            
+            # Copy the simulation directory
+            cp -r "$sim" "gh-pages/api-test-performance/"
+            
+            # Add to array
+            sim_names+=("$SIM_NAME")
+          done
 
-          # Verify the copy
-          if [ ! -f "gh-pages/api-test-performance/$SIM_NAME/index.html" ]; then
-            echo "Error: Report files not copied correctly"
-            exit 1
-          fi
+          # Create an index.html file to list all reports
+          cat > gh-pages/api-test-performance/index.html << EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Performance Test Reports</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; }
+              h1 { color: #333; }
+              ul { list-style-type: none; padding: 0; }
+              li { margin: 10px 0; }
+              a { color: #0366d6; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+            </style>
+          </head>
+          <body>
+            <h1>Performance Test Reports</h1>
+            <ul>
+          EOF
 
-          echo "Prepared directory structure:"
-          ls -R gh-pages/api-test-performance
+          # Add links for each simulation
+          for sim in "${sim_names[@]}"; do
+            echo "<li><a href='./$sim/index.html'>$sim</a></li>" >> gh-pages/api-test-performance/index.html
+          done
 
-          # Save the simulation name for the Print Report URL step
-          echo "simulation_name=$SIM_NAME" >> "$GITHUB_OUTPUT"
+          # Close the HTML file
+          echo "</ul></body></html>" >> gh-pages/api-test-performance/index.html
+
+          # Save the first simulation name for the Print Report URL step
+          echo "simulation_name=${sim_names[0]}" >> "$GITHUB_OUTPUT"
+          echo "All simulations processed successfully"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -161,10 +188,11 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Print Report URL
+      - name: Print Report URLs
         run: |
-          echo "Performance Test Report will be available at:"
-          echo "https://alexandervegazo26.github.io/pet-store-api-test/api-test-performance/${{ steps.prepare_report.outputs.simulation_name }}"
+          echo "Performance Test Reports will be available at:"
+          echo "Main index: https://alexandervegazo26.github.io/pet-store-api-test/api-test-performance/"
+          echo "Latest report: https://alexandervegazo26.github.io/pet-store-api-test/api-test-performance/${{ steps.prepare_report.outputs.simulation_name }}"
 
       - name: Wait for GitHub Pages
         run: sleep 30
