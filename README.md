@@ -167,9 +167,9 @@ The project includes GitHub Actions workflows for automated testing:
 
 ## Functional Test Cases
 
-### Pet Endpoints
+## Pet Endpoints
 
-#### Add New Pet
+### Add New Pet
 
 **Prerequisites:**
 
@@ -190,7 +190,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Response contains created pet details
 - Pet data matches input data
 
-#### Update Existing Pet
+### Update Existing Pet
 
 **Prerequisites:**
 
@@ -211,7 +211,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Pet details are updated in the system
 - Response contains updated pet data
 
-#### Find Pets by Status
+### Find Pets by Status
 
 **Prerequisites:**
 
@@ -231,7 +231,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Returns array of pets matching status
 - Each pet in response has correct status
 
-#### Delete Pet
+### Delete Pet
 
 **Prerequisites:**
 
@@ -252,7 +252,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Pet is removed from system
 - Subsequent GET request returns 404
 
-#### Invalid Pet Creation
+### Invalid Pet Creation
 
 **Prerequisites:**
 
@@ -272,7 +272,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Error message indicates invalid input
 - Pet is not created in system
 
-#### Upload Pet Image
+### Upload Pet Image
 
 **Prerequisites:**
 
@@ -293,7 +293,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Image is associated with pet
 - Response contains upload success message
 
-#### Get Non-existent Pet
+### Get Non-existent Pet
 
 **Prerequisites:**
 
@@ -312,9 +312,9 @@ The project includes GitHub Actions workflows for automated testing:
 - Error message indicates pet not found
 - Response body contains appropriate error details
 
-### Store Endpoints
+## Store Endpoints
 
-#### Place New Order
+### Place New Order
 
 **Prerequisites:**
 
@@ -334,7 +334,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Order is created in system
 - Response contains order details
 
-#### Check Store Inventory
+### Check Store Inventory
 
 **Prerequisites:**
 
@@ -353,7 +353,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Returns inventory counts by status
 - Response contains valid inventory data
 
-#### Delete an Order
+### Delete an Order
 
 **Prerequisites:**
 
@@ -372,7 +372,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Order is removed from system
 - Subsequent GET request returns 404
 
-#### Find Order by ID
+### Find Order by ID
 
 **Prerequisites:**
 
@@ -391,7 +391,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Returns correct order information
 - All order fields are present and valid
 
-#### Find Non-existing Order by ID
+### Find Non-existing Order by ID
 
 **Prerequisites:**
 
@@ -410,9 +410,9 @@ The project includes GitHub Actions workflows for automated testing:
 - Error message indicates order not found
 - Response contains appropriate error details
 
-### User Endpoints
+## User Endpoints
 
-#### Create New User
+### Create New User
 
 **Prerequisites:**
 
@@ -432,7 +432,7 @@ The project includes GitHub Actions workflows for automated testing:
 - User is created in system
 - Response contains user creation confirmation
 
-#### User Login
+### User Login
 
 **Prerequisites:**
 
@@ -452,7 +452,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Returns valid session token
 - Response includes login timestamp
 
-#### Create Multiple Users
+### Create Multiple Users
 
 **Prerequisites:**
 
@@ -472,7 +472,7 @@ The project includes GitHub Actions workflows for automated testing:
 - All users are created in system
 - Response indicates successful creation
 
-#### User Logout
+### User Logout
 
 **Prerequisites:**
 
@@ -492,7 +492,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Session is terminated
 - User is successfully logged out
 
-#### Get User by Username
+### Get User by Username
 
 **Prerequisites:**
 
@@ -511,7 +511,7 @@ The project includes GitHub Actions workflows for automated testing:
 - Returns correct user information
 - All user fields are present and valid
 
-#### Update User by Username
+### Update User by Username
 
 **Prerequisites:**
 
@@ -532,7 +532,7 @@ The project includes GitHub Actions workflows for automated testing:
 - User details are updated
 - Response confirms successful update
 
-#### Delete User by Username
+### Delete User by Username
 
 **Prerequisites:**
 
