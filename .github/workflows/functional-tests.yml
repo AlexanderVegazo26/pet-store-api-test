@@ -1,21 +1,17 @@
-# This workflow executes functional tests for the Pet Store API using Playwright
-# It can run all test suites or specific ones (pet, store, user) and publishes results to GitHub Pages
 name: Functional Tests
 
-# Define the required permissions for GitHub Actions
-# These permissions are necessary for checking out code, publishing test reports, and deployment
 permissions:
-  contents: write # Allows the workflow to commit to the repository
-  pages: write # Required for publishing test reports to GitHub Pages
-  id-token: write # Required for deployment authentication
+  contents: write
+  pages: write
+  id-token: write
 
-# Configure when the workflow should run
 on:
   push:
     branches: ["main"]
     paths:
       - "api-test-automation/**"
       - ".github/workflows/functional-tests.yml"
+      - ".github/config.yml"
   workflow_dispatch:
     inputs:
       test_type:
@@ -28,6 +24,13 @@ on:
           - pet
           - store
           - user
+      environment:
+        description: "Target environment for tests"
+        required: true
+        default: "ci"
+        type: choice
+        options:
+          - ci
       debug:
         description: "Run in debug mode"
         required: false
@@ -43,18 +46,45 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      # Step 1: Check out the test repository containing our automation tests
       - name: Checkout Test Repository
         uses: actions/checkout@v4
 
-      # Step 2: Check out the Swagger Petstore application that we'll be testing
+      - name: Install YQ
+        uses: mikefarah/yq@master
+        with:
+          cmd: --version
+
+      - name: Load Environment Configuration
+        id: config
+        run: |
+          CONFIG_PATH=".github/config.yml"
+          if [ ! -f "$CONFIG_PATH" ]; then
+            echo "Error: Configuration file not found at $CONFIG_PATH"
+            exit 1
+          fi
+
+          ENV="${{ github.event.inputs.environment || 'ci' }}"
+
+          echo "API_PROTOCOL=$(yq eval ".environments.${ENV}.api.protocol" $CONFIG_PATH)" >> $GITHUB_ENV
+          echo "API_HOST=$(yq eval ".environments.${ENV}.api.host" $CONFIG_PATH)" >> $GITHUB_ENV
+          echo "API_PORT=$(yq eval ".environments.${ENV}.api.port" $CONFIG_PATH)" >> $GITHUB_ENV
+          echo "API_BASE_PATH=$(yq eval ".environments.${ENV}.api.base_path" $CONFIG_PATH)" >> $GITHUB_ENV
+          echo "HEALTH_ENDPOINT=$(yq eval ".environments.${ENV}.api.health_endpoint" $CONFIG_PATH)" >> $GITHUB_ENV
+          echo "TIMEOUT_SECONDS=$(yq eval ".environments.${ENV}.test.timeout_seconds" $CONFIG_PATH)" >> $GITHUB_ENV
+          echo "HEALTH_CHECK_INTERVAL=$(yq eval ".environments.${ENV}.test.health_check_interval" $CONFIG_PATH)" >> $GITHUB_ENV
+
+          API_URL="$(yq eval ".environments.${ENV}.api.protocol" $CONFIG_PATH)://$(yq eval ".environments.${ENV}.api.host" $CONFIG_PATH):$(yq eval ".environments.${ENV}.api.port" $CONFIG_PATH)$(yq eval ".environments.${ENV}.api.base_path" $CONFIG_PATH)"
+          echo "API_URL=${API_URL}" >> $GITHUB_ENV
+
+          HEALTH_CHECK_URL="${API_URL}$(yq eval ".environments.${ENV}.api.health_endpoint" $CONFIG_PATH)"
+          echo "HEALTH_CHECK_URL=${HEALTH_CHECK_URL}" >> $GITHUB_ENV
+
       - name: Checkout Swagger Petstore
         uses: actions/checkout@v4
         with:
           repository: swagger-api/swagger-petstore
           path: swagger-petstore
 
-      # Step 3: Set up Java environment for running the Petstore application
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
@@ -62,65 +92,53 @@ jobs:
           distribution: "temurin"
           cache: "maven"
 
-      # Step 4: Build and start the Petstore application in a Docker container
       - name: Build & Start Petstore
         run: |
           cd swagger-petstore
           mvn clean package -DskipTests
           docker build -t swaggerapi/petstore3:unstable .
-          docker run --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:unstable
-          # Wait for the application to be ready (timeout after 60 seconds)
-          timeout 60 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8080/api/v3/openapi.json)" != "200" ]]; do sleep 5; done' || false
+          docker run --name swaggerapi-petstore3 -d -p ${{ env.API_PORT }}:8080 swaggerapi/petstore3:unstable
+          timeout ${{ env.TIMEOUT_SECONDS }} bash -c \
+            'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' ${{ env.HEALTH_CHECK_URL }})" != "200" ]]; \
+            do sleep ${{ env.HEALTH_CHECK_INTERVAL }}; done' || false
 
-      # Step 5: Set up Node.js environment for running Playwright tests
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
 
-      # Step 6: Install project dependencies and Playwright
       - name: Install Dependencies
         working-directory: ./api-test-automation
         run: |
           npm ci
           npx playwright install --with-deps
 
-      # Step 7: Build the TypeScript project
       - name: Build
         working-directory: ./api-test-automation
         env:
           NODE_OPTIONS: "-r tsconfig-paths/register"
         run: |
+          echo "API_URL=${{ env.API_URL }}" > .env
           npm run build
-          # Verify the build output
           echo "Checking compiled files:"
           ls -la dist/src/api || true
           ls -la dist/tests || true
 
-      # Step 8: Execute the API tests
       - name: Run API Tests
         working-directory: ./api-test-automation
         env:
           NODE_OPTIONS: "-r tsconfig-paths/register"
         run: |
-          # Clean the report directory before running tests
           rm -rf playwright-report
           mkdir playwright-report
-
-          # Run the tests and generate HTML report
           npm run test
 
-      # Step 9: Prepare the test reports for publication
       - name: Prepare Report Directory
         id: prepare_report
         run: |
-          # Create the base directory structure
           mkdir -p gh-pages/api-test-automation
-
-          # Get current timestamp for the report
           TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
-          # Create an index page with navigation and styling
           cat > gh-pages/api-test-automation/index.html << EOF
           <!DOCTYPE html>
           <html>
@@ -169,7 +187,6 @@ jobs:
           </html>
           EOF
 
-          # Create report directory and copy the Playwright report
           mkdir -p gh-pages/api-test-automation/report
           if [ -d "api-test-automation/playwright-report" ]; then
               cp -r api-test-automation/playwright-report/* gh-pages/api-test-automation/report/
@@ -180,40 +197,29 @@ jobs:
               exit 1
           fi
 
-          # Verify the final directory structure
-          echo "Final directory structure:"
-          ls -la gh-pages/api-test-automation/
-          ls -la gh-pages/api-test-automation/report/ || echo "Report directory is empty"
-
-      # Step 10: Configure GitHub Pages for report publishing
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      # Step 11: Upload the generated reports as a GitHub Pages artifact
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: gh-pages
 
-      # Step 12: Deploy the reports to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 13: Output the URLs where reports can be accessed
       - name: Print Report URLs
         run: |
           echo "API Test Automation Reports will be available at:"
           echo "Main index: https://alexandervegazo26.github.io/pet-store-api-test/api-test-automation/"
           echo "Latest report: https://alexandervegazo26.github.io/pet-store-api-test/api-test-automation/report/"
 
-      # Step 14: Wait for GitHub Pages deployment to complete
       - name: Wait for GitHub Pages
         run: sleep 30
 
-      # Step 15: Clean up Docker resources
       - name: Cleanup
         if: always()
         run: |
@@ -222,7 +228,6 @@ jobs:
           docker image rm swaggerapi/petstore3:unstable || true
           docker system prune -f
 
-# Configure concurrent workflow runs
 concurrency:
   group: "petstore-${{ github.ref }}"
   cancel-in-progress: false
