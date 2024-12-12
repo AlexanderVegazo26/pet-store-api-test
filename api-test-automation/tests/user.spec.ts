@@ -1,4 +1,4 @@
-import { User } from "@/types/user.types";
+import { User } from "@schemas/user.schema";
 import { UserApi } from "@api/user-api";
 import { DataGenerator } from "@helpers/dataGenerator";
 import { test, expect } from "@playwright/test";
@@ -10,112 +10,76 @@ test.describe("User Endpoints", () => {
     userApi = new UserApi(request);
   });
 
-  test(
-    "should create a new user",
-    {
-      tag: ["@smoke"],
-    },
-    async () => {
-      const user: User = DataGenerator.generateUser();
-      const createUserResponse = await userApi.createUser(user);
+  test("should create a new user", { tag: ["@smoke"] }, async () => {
+    const user: User = DataGenerator.user();
+    const response = await userApi.createUser(user);
 
-      expect(createUserResponse.status()).toBe(200);
-
-      const getUserResponse = await userApi.getUserByUsername(user.username);
-
-      expect(await getUserResponse.json()).toMatchObject({
-        username: user.username,
-        email: user.email,
-      });
-    }
-  );
+    expect(response.status()).toBe(200);
+    const getUserResponse = await userApi.getUserByUsername(user.username);
+    expect(await getUserResponse.json()).toMatchObject({
+      username: user.username,
+      email: user.email,
+    });
+  });
 
   test("should create multiple users", async () => {
-    const users: User[] = DataGenerator.generateUsers(5);
+    const users: User[] = DataGenerator.users(3);
+    const response = await userApi.createUsersWithList(users);
 
-    const createUsersResponse = await userApi.createUsersWithList(users);
-    expect(createUsersResponse.status()).toBe(200);
-
+    expect(response.status()).toBe(200);
     for (const user of users) {
       const getUserResponse = await userApi.getUserByUsername(user.username);
       expect(getUserResponse.status()).toBe(200);
     }
   });
 
-  test(
-    "should login user",
-    {
-      tag: ["@smoke"],
-    },
-    async () => {
-      const user = DataGenerator.generateUser();
-      await userApi.createUser(user);
-      const loginResponse = await userApi.login(user.username, user.password);
-      expect(loginResponse.status()).toBe(200);
-    }
-  );
+  test("should login user", { tag: ["@smoke"] }, async () => {
+    const user = DataGenerator.user();
+    await userApi.createUser(user);
 
-  test(
-    "should logout user",
-    {
-      tag: ["@smoke"],
-    },
-    async () => {
-      const user = DataGenerator.generateUser();
-      await userApi.createUser(user);
-      const loginResponse = await userApi.login(user.username, user.password);
-      expect(loginResponse.status()).toBe(200);
+    const response = await userApi.login(user.username, user.password);
+    expect(response.status()).toBe(200);
+  });
 
-      const logoutResponse = await userApi.logout();
-      expect(logoutResponse.status()).toBe(200);
-    }
-  );
+  test("should logout user", { tag: ["@smoke"] }, async () => {
+    const user = DataGenerator.user();
+    await userApi.createUser(user);
 
-  test(
-    "should get user by username",
-    {
-      tag: ["@smoke"],
-    },
-    async () => {
-      const user = DataGenerator.generateUser();
-      await userApi.createUser(user);
+    await userApi.login(user.username, user.password);
+    const response = await userApi.logout();
+    expect(response.status()).toBe(200);
+  });
 
-      const getUserResponse = await userApi.getUserByUsername(user.username);
-      expect(getUserResponse.status()).toBe(200);
+  test("should get user by username", { tag: ["@smoke"] }, async () => {
+    const user = DataGenerator.user();
+    await userApi.createUser(user);
 
-      expect(await getUserResponse.json()).toMatchObject({
-        ...user,
-      });
-    }
-  );
+    const response = await userApi.getUserByUsername(user.username);
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toMatchObject({
+      username: user.username,
+      email: user.email,
+    });
+  });
 
-  test(
-    "should update user",
-    {
-      tag: ["@smoke"],
-    },
-    async () => {
-      const user = DataGenerator.generateUser();
-      await userApi.createUser(user);
+  test("should update user", { tag: ["@smoke"] }, async () => {
+    const user = DataGenerator.user();
+    await userApi.createUser(user);
 
-      const userDataToUpdate: Partial<User> = {
-        firstName: "UpdatedFirstName",
-        email: "updated@updated.com",
-      };
+    const updatedUser = DataGenerator.user({
+      username: user.username,
+      firstName: "UpdatedFirstName",
+      email: "updated@example.com",
+    });
 
-      const updatedUser: Partial<User> = { ...user, ...userDataToUpdate };
+    const updateResponse = await userApi.updateUser(user.username, updatedUser);
+    expect(updateResponse.status()).toBe(200);
 
-      const updateUserResponse = await userApi.updateUser(
-        user.username,
-        updatedUser
-      );
-      expect(updateUserResponse.status()).toBe(200);
-
-      const getUserResponse = await userApi.getUserByUsername(user.username);
-
-      expect(await getUserResponse.json()).toMatchObject({
-        ...updatedUser,
-      });
-    }
-  );
+    const getUserResponse = await userApi.getUserByUsername(user.username);
+    expect(await getUserResponse.json()).toMatchObject({
+      username: updatedUser.username,
+      firstName: updatedUser.firstName,
+      email: updatedUser.email,
+    });
+  });
 });

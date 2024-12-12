@@ -38,10 +38,6 @@ export class DataGenerator {
     };
   }
 
-  /* static generateOrders(count: number = 1): Order[] {
-    return Array.from({ length: count }, () => this.generateOrder());
-  }*/
-
   static generateUser(): User {
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();

@@ -11,11 +11,10 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"],
       "@api/*": ["src/api/*"],
       "@helpers/*": ["src/helpers/*"],
       "@enums/*": ["src/enums/*"],
-      "@/types/*": ["src/types/*"]
+      "@schemas/*": ["src/schemas/*"]
     },
     "types": ["node", "@playwright/test"]
   },

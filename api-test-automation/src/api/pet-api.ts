@@ -1,6 +1,6 @@
-import { Pet } from "@/types/pet.types";
 import { PetStatus } from "@enums/pet.enum";
 import { APIRequestContext, APIResponse } from "@playwright/test";
+import { Pet } from "@schemas/pet.schema";
 
 export class PetApi {
   constructor(private request: APIRequestContext) {}
