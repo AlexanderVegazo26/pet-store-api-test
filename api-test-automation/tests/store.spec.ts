@@ -91,6 +91,7 @@ test.describe("Store Endpoints", () => {
     const nonExistentOrderId = 99999982825;
     const getOrderResponse = await storeApi.getOrderById(nonExistentOrderId);
     expect(getOrderResponse.status()).toBe(404);
+    expect(await getOrderResponse.text()).toBe("Order not found");
   });
 
   test(

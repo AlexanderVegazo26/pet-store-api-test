@@ -149,5 +149,6 @@ test.describe("Pet store API Tests", () => {
     const getPetResponse = await petApi.getPetById(invalidPetId);
 
     expect(getPetResponse.status()).toBe(404);
+    expect(await getPetResponse.text()).toBe("Pet not found");
   });
 });
