@@ -1,7 +1,6 @@
 import { User } from "@/types/user.types";
 import { UserApi } from "@api/user-api";
 import { DataGenerator } from "@helpers/dataGenerator";
-import { XmlHelper } from "@helpers/xmlhelper";
 import { test, expect } from "@playwright/test";
 
 test.describe("User Endpoints", () => {
@@ -23,11 +22,8 @@ test.describe("User Endpoints", () => {
       expect(createUserResponse.status()).toBe(200);
 
       const getUserResponse = await userApi.getUserByUsername(user.username);
-      const getUserResponseParsed = await XmlHelper.parseXmlResponse<{
-        User: User;
-      }>(getUserResponse);
 
-      expect(getUserResponseParsed.User).toMatchObject({
+      expect(await getUserResponse.json()).toMatchObject({
         username: user.username,
         email: user.email,
       });
@@ -87,11 +83,7 @@ test.describe("User Endpoints", () => {
       const getUserResponse = await userApi.getUserByUsername(user.username);
       expect(getUserResponse.status()).toBe(200);
 
-      const getUserResponseParsed = await XmlHelper.parseXmlResponse<{
-        User: User;
-      }>(getUserResponse);
-
-      expect(getUserResponseParsed.User).toMatchObject({
+      expect(await getUserResponse.json()).toMatchObject({
         ...user,
       });
     }
@@ -120,11 +112,8 @@ test.describe("User Endpoints", () => {
       expect(updateUserResponse.status()).toBe(200);
 
       const getUserResponse = await userApi.getUserByUsername(user.username);
-      const getUserResponseParsed = await XmlHelper.parseXmlResponse<{
-        User: User;
-      }>(getUserResponse);
 
-      expect(getUserResponseParsed.User).toMatchObject({
+      expect(await getUserResponse.json()).toMatchObject({
         ...updatedUser,
       });
     }

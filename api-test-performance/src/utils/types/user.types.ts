@@ -1,4 +1,4 @@
-import { UserStatus } from "../enums/user.enum";
+import { UserStatus } from "@enums/user.enum";
 
 export interface User {
   id: number;
@@ -7,6 +7,6 @@ export interface User {
   lastName: string;
   email: string;
   password: string;
-  phone: string;
+  phone?: string;
   userStatus: UserStatus;
 }

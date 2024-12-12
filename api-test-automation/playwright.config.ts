@@ -18,7 +18,7 @@ const config: PlaywrightTestConfig = {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: "http://127.0.0.1:8080",
     extraHTTPHeaders: {
-      Accept: "application/xml",
+      Accept: "application/json",
       "Content-Type": "application/json",
     },
 

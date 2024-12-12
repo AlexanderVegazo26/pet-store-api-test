@@ -1,11 +1,11 @@
-import { PetStatus } from "../enums/pet.enum";
+import { PetStatus } from "@enums/pet.enum";
 
 export interface Pet {
   id: number;
   name: string;
   category?: Category;
   photoUrls: string[];
-  tags?: tag[];
+  tags?: Tag[];
   status?: PetStatus;
 }
 
@@ -14,16 +14,13 @@ export interface Category {
   name: string;
 }
 
-export interface tag {
+export interface Tag {
   id: number;
   name: string;
 }
 
-
 export interface PetListResponse {
-  ArrayList: {
-    item: Pet[];
-  };
+  pets: Pet[];
 }
 
 export interface ApiError {
@@ -32,5 +29,5 @@ export interface ApiError {
 }
 
 export interface ApiErrorResponse {
-  ApiError: ApiError;
+  error: ApiError;
 }

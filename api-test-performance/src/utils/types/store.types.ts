@@ -1,10 +1,10 @@
-import { OrderStatus } from "../enums/store.enum";
+import { OrderStatus } from "@enums/store.enum";
 
 export interface Order {
   id: number;
   petId: number;
   quantity: number;
-  shipDate?: string;
+  shipDate?: Date;
   status?: OrderStatus;
   complete?: boolean;
 }
@@ -23,7 +23,7 @@ export interface Customer {
 }
 
 export interface InventoryResponse {
-  HashMap: {
+  inventory: {
     approved: number;
     placed: number;
     delivered: number;

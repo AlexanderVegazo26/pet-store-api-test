@@ -34,7 +34,7 @@ export class DataGenerator {
       id: generateUniqueIntId(),
       petId: petId || faker.number.int({ min: 1, max: 1000 }),
       quantity: quantity || faker.number.int({ min: 1, max: 5 }),
-      shipDate: faker.date.future().toISOString(),
+      shipDate: faker.date.future(),
       status: OrderStatus.PLACED,
       complete: false,
     };

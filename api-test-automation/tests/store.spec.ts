@@ -1,8 +1,6 @@
 import { StoreApi } from "@api/store-api";
 import { InventoryResponse, Order } from "@/types/store.types";
-
 import { DataGenerator } from "@helpers/dataGenerator";
-import { XmlHelper } from "@helpers/xmlhelper";
 import { test, expect } from "@playwright/test";
 
 test.describe("Store Endpoints", () => {
@@ -23,11 +21,7 @@ test.describe("Store Endpoints", () => {
       const createOrderResponse = await storeApi.createOrder(order);
       expect(createOrderResponse.status()).toBe(200); //it should be 201
 
-      const orderResponseParsed = await XmlHelper.parseXmlResponse<{
-        Order: Order;
-      }>(createOrderResponse);
-
-      expect(orderResponseParsed.Order).toMatchObject({
+      expect(await createOrderResponse.json()).toMatchObject({
         id: order.id,
         petId: order.petId,
         quantity: order.quantity,
@@ -45,11 +39,7 @@ test.describe("Store Endpoints", () => {
       const inventoryResponse = await storeApi.getInventory();
       expect(inventoryResponse.status()).toBe(200);
 
-      const inventoryResponseParsed = (
-        await XmlHelper.parseXmlResponse<InventoryResponse>(inventoryResponse)
-      ).HashMap;
-
-      expect(inventoryResponseParsed).toEqual(
+      expect(await inventoryResponse.json()).toEqual(
         expect.objectContaining({
           approved: expect.any(Number),
           placed: expect.any(Number),
@@ -72,13 +62,7 @@ test.describe("Store Endpoints", () => {
       const getOrderResponse = await storeApi.getOrderById(order.id);
       expect(getOrderResponse.status()).toBe(200);
 
-      const orderResponseParsed = (
-        await XmlHelper.parseXmlResponse<{
-          Order: Order;
-        }>(getOrderResponse)
-      ).Order;
-
-      expect(orderResponseParsed).toMatchObject({
+      expect(await getOrderResponse.json()).toMatchObject({
         id: order.id,
         petId: order.petId,
         quantity: order.quantity,
@@ -104,10 +88,7 @@ test.describe("Store Endpoints", () => {
       const createOrderResponse = await storeApi.createOrder(order);
       expect(createOrderResponse.status()).toBe(200);
 
-      const orderResponseParsed = await XmlHelper.parseXmlResponse<{
-        Order: Order;
-      }>(createOrderResponse);
-      expect(orderResponseParsed.Order).toMatchObject({
+      expect(await createOrderResponse.json()).toMatchObject({
         id: order.id,
         petId: order.petId,
         quantity: order.quantity,
