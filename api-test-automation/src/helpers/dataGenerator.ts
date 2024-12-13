@@ -47,7 +47,7 @@ export class OrderGenerator {
       id: generateUniqueIntId(),
       petId: faker.number.int({ min: 1, max: 1000 }),
       quantity: faker.number.int({ min: 1, max: 5 }),
-      shipDate: faker.date.future(),
+      shipDate: faker.date.future().toISOString(),
       status: OrderStatus.PLACED,
       complete: false,
       ...overrides,

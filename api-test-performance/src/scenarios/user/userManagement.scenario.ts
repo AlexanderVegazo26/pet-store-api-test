@@ -2,12 +2,11 @@ import { faker } from "@faker-js/faker";
 import { exec, scenario, StringBody } from "@gatling.io/core";
 import { http, status } from "@gatling.io/http";
 import { DataGenerator } from "@helpers/dataGenerator";
-
-import { User } from "@utils/types/user.types";
+import { User } from "@schemas/user.schema";
 
 const createUserSteps = () =>
   exec((session) => {
-    const user: User = DataGenerator.generateUser();
+    const user: User = DataGenerator.user();
     return session.set("testUser", user);
   })
     .exec(
@@ -28,7 +27,7 @@ export const createUserScenario = () => {
 };
 
 export const createUsersWithListScenario = () => {
-  const users: User[] = DataGenerator.generateUsers(5);
+  const users: User[] = DataGenerator.users(5);
 
   return scenario("Create Users with List")
     .exec(

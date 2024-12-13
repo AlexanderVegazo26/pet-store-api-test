@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { UserStatus } from "@enums/user.enum";
 
-// Base schemas
+
 export const userSchema = z.object({
   id: z.number(),
   username: z.string(),
@@ -13,13 +13,12 @@ export const userSchema = z.object({
   userStatus: z.nativeEnum(UserStatus),
 });
 
-// Error schema
+
 export const apiErrorSchema = z.object({
   code: z.number(),
   message: z.string(),
 });
 
-// Request schemas
 export const createUserRequestSchema = userSchema.omit({ id: true });
 export const updateUserRequestSchema = userSchema;
 export const loginRequestSchema = z.object({
@@ -27,7 +26,7 @@ export const loginRequestSchema = z.object({
   password: z.string(),
 });
 
-// Response schemas
+
 export const createUserResponseSchema = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
@@ -98,7 +97,7 @@ export const logoutResponseSchema = z.discriminatedUnion("success", [
   }),
 ]);
 
-// Types
+
 export type User = z.infer<typeof userSchema>;
 export type ApiError = z.infer<typeof apiErrorSchema>;
 export type CreateUserResponse = z.infer<typeof createUserResponseSchema>;

@@ -8,67 +8,63 @@ export const orderSchema = z.object({
   quantity: z.number(),
   shipDate: z.string().optional(),
   status: z.nativeEnum(OrderStatus),
-  complete: z.boolean().optional(),
+  complete: z.boolean().optional()
 });
 
 export const inventorySchema = z.record(z.string(), z.number());
 
-// Error schema
 export const apiErrorSchema = z.object({
   code: z.number(),
-  message: z.string(),
+  message: z.string()
 });
 
-// Request schemas
 export const createOrderRequestSchema = orderSchema.omit({ id: true });
 export const updateOrderRequestSchema = orderSchema;
 
-// Response schemas
 export const createOrderResponseSchema = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
-    data: orderSchema,
+    data: orderSchema
   }),
   z.object({
     success: z.literal(false),
-    error: apiErrorSchema,
-  }),
+    error: apiErrorSchema
+  })
 ]);
 
 export const getOrderByIdResponseSchema = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
-    data: orderSchema,
+    data: orderSchema
   }),
   z.object({
     success: z.literal(false),
-    error: apiErrorSchema,
-  }),
+    error: apiErrorSchema
+  })
 ]);
 
 export const deleteOrderResponseSchema = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
-    message: z.string(),
+    message: z.string()
   }),
   z.object({
     success: z.literal(false),
-    error: apiErrorSchema,
-  }),
+    error: apiErrorSchema
+  })
 ]);
 
 export const getInventoryResponseSchema = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
-    data: inventorySchema,
+    data: inventorySchema
   }),
   z.object({
     success: z.literal(false),
-    error: apiErrorSchema,
-  }),
+    error: apiErrorSchema
+  })
 ]);
 
-// Types
 export type Order = z.infer<typeof orderSchema>;
 export type Inventory = z.infer<typeof inventorySchema>;
 export type ApiError = z.infer<typeof apiErrorSchema>;

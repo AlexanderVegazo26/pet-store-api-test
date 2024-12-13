@@ -6,7 +6,7 @@
       "@test/*": ["src/test/*"],
       "@scenarios/*": ["src/scenarios/*"],
       "@utils/*": ["src/utils/*"],
-      "@types/*": ["src/utils/types/*"],
+      "@schemas/*": ["src/utils/schemas/*"],
       "@config/*": ["src/utils/config/*"],
       "@data/*": ["src/utils/data/*"],
       "@helpers/*": ["src/utils/helpers/*"],
@@ -24,6 +24,12 @@
     "types": ["node"],
     "sourceMap": true
   },
-  "include": ["src/**/*.ts", "src/**/*.json"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.json",
+    "src/utils/types/store.types.file",
+    "src/utils/types/user.types.file",
+    "src/utils/helpers/dataGenerator.file"
+  ],
   "exclude": ["node_modules", "target", "**/*.test.ts"]
 }

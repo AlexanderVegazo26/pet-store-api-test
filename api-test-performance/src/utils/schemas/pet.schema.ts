@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { PetStatus } from "@enums/pet.enum";
 
-// Base schemas
+
 export const categorySchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -12,7 +12,6 @@ export const tagSchema = z.object({
   name: z.string(),
 });
 
-// Main pet schema
 export const petSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -22,7 +21,7 @@ export const petSchema = z.object({
   status: z.nativeEnum(PetStatus).optional(),
 });
 
-// Response schemas for different endpoints
+
 export const petListSchema = z.array(petSchema);
 
 export const apiErrorSchema = z.object({

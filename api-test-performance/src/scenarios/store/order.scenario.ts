@@ -1,11 +1,11 @@
 import { exec, jsonPath, scenario, StringBody } from "@gatling.io/core";
 import { http, status } from "@gatling.io/http";
-import { Order } from "@utils/types/store.types";
 import { DataGenerator } from "@helpers/dataGenerator";
+import { Order } from "@schemas/store.schema";
 
 const placeOrderSteps = () =>
   exec((session) => {
-    const order = DataGenerator.generateOrder();
+    const order = DataGenerator.order();
     return session.set("testOrder", order);
   }).exec(
     http("Create purchase order")
@@ -16,11 +16,7 @@ const placeOrderSteps = () =>
           return JSON.stringify(order);
         })
       )
-      .check(
-        status().is(200),
-        // Store the order ID from response for subsequent requests
-        jsonPath("$.id").saveAs("orderId")
-      )
+      .check(status().is(200), jsonPath("$.id").saveAs("orderId"))
   );
 
 export const placeOrderScenario = () => {

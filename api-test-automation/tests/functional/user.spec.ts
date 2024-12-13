@@ -10,19 +10,23 @@ test.describe("User Endpoints", () => {
     userApi = new UserApi(request);
   });
 
-  test("should create a new user", { tag: ["@smoke"] }, async () => {
-    const user: User = DataGenerator.user();
-    const response = await userApi.createUser(user);
+  test(
+    "should create a new user",
+    { tag: ["@smoke", "@functional"] },
+    async () => {
+      const user: User = DataGenerator.user();
+      const response = await userApi.createUser(user);
 
-    expect(response.status()).toBe(200);
-    const getUserResponse = await userApi.getUserByUsername(user.username);
-    expect(await getUserResponse.json()).toMatchObject({
-      username: user.username,
-      email: user.email,
-    });
-  });
+      expect(response.status()).toBe(200);
+      const getUserResponse = await userApi.getUserByUsername(user.username);
+      expect(await getUserResponse.json()).toMatchObject({
+        username: user.username,
+        email: user.email,
+      });
+    }
+  );
 
-  test("should create multiple users", async () => {
+  test("should create multiple users", { tag: ["@functional"] }, async () => {
     const users: User[] = DataGenerator.users(3);
     const response = await userApi.createUsersWithList(users);
 
@@ -33,7 +37,7 @@ test.describe("User Endpoints", () => {
     }
   });
 
-  test("should login user", { tag: ["@smoke"] }, async () => {
+  test("should login user", { tag: ["@smoke", "@functional"] }, async () => {
     const user = DataGenerator.user();
     await userApi.createUser(user);
 
@@ -41,7 +45,7 @@ test.describe("User Endpoints", () => {
     expect(response.status()).toBe(200);
   });
 
-  test("should logout user", { tag: ["@smoke"] }, async () => {
+  test("should logout user", { tag: ["@smoke", "@functional"] }, async () => {
     const user = DataGenerator.user();
     await userApi.createUser(user);
 
@@ -50,19 +54,23 @@ test.describe("User Endpoints", () => {
     expect(response.status()).toBe(200);
   });
 
-  test("should get user by username", { tag: ["@smoke"] }, async () => {
-    const user = DataGenerator.user();
-    await userApi.createUser(user);
+  test(
+    "should get user by username",
+    { tag: ["@smoke", "@functional"] },
+    async () => {
+      const user = DataGenerator.user();
+      await userApi.createUser(user);
 
-    const response = await userApi.getUserByUsername(user.username);
-    expect(response.status()).toBe(200);
-    expect(await response.json()).toMatchObject({
-      username: user.username,
-      email: user.email,
-    });
-  });
+      const response = await userApi.getUserByUsername(user.username);
+      expect(response.status()).toBe(200);
+      expect(await response.json()).toMatchObject({
+        username: user.username,
+        email: user.email,
+      });
+    }
+  );
 
-  test("should update user", { tag: ["@smoke"] }, async () => {
+  test("should update user", { tag: ["@smoke", "@functional"] }, async () => {
     const user = DataGenerator.user();
     await userApi.createUser(user);
 

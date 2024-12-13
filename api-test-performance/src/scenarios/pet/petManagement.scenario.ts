@@ -4,7 +4,7 @@ import { http, status } from "@gatling.io/http";
 import { DataGenerator } from "@helpers/dataGenerator";
 
 export const createPetScenario = () => {
-  const pet = DataGenerator.generatePet();
+  const pet = DataGenerator.pet();
 
   return scenario("Create Pet")
     .exec(
@@ -17,7 +17,7 @@ export const createPetScenario = () => {
 };
 
 export const updatePetScenario = () => {
-  const pet = DataGenerator.generatePet();
+  const pet = DataGenerator.pet();
 
   return scenario("Update Pet")
     .exec(

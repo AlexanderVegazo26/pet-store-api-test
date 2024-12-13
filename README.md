@@ -13,6 +13,7 @@ Both test projects target the [Swagger Pet Store](https://github.com/swagger-api
 
 ## Table of Contents
 
+- [Test Coverage Overview](#test-coverage-overview)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Configuration](#configuration)
@@ -22,6 +23,54 @@ Both test projects target the [Swagger Pet Store](https://github.com/swagger-api
 - [Functional Test Cases ](#functional-test-cases)
 - [Functional Test Case Selection Reason](#functional-test-case-selection-reason)
 - [Performance test Scenarios](#performance-test-scenarios)
+
+## Test Coverage Overview
+
+### What's Covered
+
+1. **Functional Testing**
+
+   - Complete CRUD operations for Pets, Store, and Users
+   - Authentication and authorization flows
+   - Basic data validation
+   - Success scenarios for all main endpoints
+   - Common error scenarios
+   - File upload operations
+
+2. **Performance Testing**
+
+   - Load testing for all major endpoints
+   - Concurrent user simulations
+   - Resource-intensive operations
+   - Business-critical paths
+
+3. **Contract Testing**
+   - Response schema validation
+   - Required field validation
+   - Data type verification
+   - Status code validation
+
+### What's Not Covered
+
+1. **Integration Testing**
+
+   - Database persistence validation
+   - External service integrations
+   - Third-party payment processing
+   - Email notification systems
+
+2. **Security Testing**
+
+   - Penetration testing
+   - Security scanning
+   - Extended authentication scenarios
+   - Advanced authorization rules
+
+3. **Edge Cases**
+   - Extreme load conditions (>1000 concurrent users)
+   - Network failure scenarios
+   - Partial system outages
+   - Data recovery scenarios
 
 ## Prerequisites
 
@@ -36,8 +85,9 @@ Before you begin, ensure you have the following installed:
 ## Stack used in this project (main tools)
 
 - Playwright `v1.49.0` (for API automation testing)
-- Gatling  `3.13.103` (for performance Testing)
+- Gatling `3.13.103` (for performance Testing)
 - Typescript as the programming language for both projects
+- Zod for schema validation
 
 ## Installation
 
@@ -51,7 +101,7 @@ cd pet-store-api-test
 2. Install dependencies for functional testing:
 
 ```bash
-cd api-test-automation
+cd /api-test-automation
 npm install
 npx playwright install --with-deps
 ```
@@ -59,7 +109,7 @@ npx playwright install --with-deps
 3. Install dependencies for performance testing:
 
 ```bash
-cd ../api-test-performance
+cd /api-test-performance
 npm install
 ```
 
@@ -647,6 +697,16 @@ deleteUserScenario(); // 100 concurrent users
 loginScenario(); // 100 concurrent users
 logoutScenario(); // 100 concurrent users
 ```
+
+#### Load Testing Configuration
+
+##### The tests use an open model injection profile with the following parameters:
+
+- `injectOpen`: Introduces virtual users into the system using an open workload model, where new users can start regardless of whether previous users have completed their scenarios.
+- `rampUsers`: Gradually increases the number of virtual users over time, creating a smooth ramp-up in load.
+- `during`: Specifies the duration of the ramp-up period.
+
+This configuration allows for testing how the system handles a gradually increasing load of users creating pets in the system.
 
 ### Performance Test Scenario Selection Rationale
 
