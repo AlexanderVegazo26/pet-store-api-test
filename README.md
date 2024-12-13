@@ -199,14 +199,17 @@ The project includes GitHub Actions workflows for automated testing:
 
 ### Functional Testing Workflow
 
-- Automatically runs on push to main branch
+- Automatically runs on push to main branch (if related changes where affected)
+- Can be triggered manually from actions tab in github
 - Executes all functional tests
 - Generates and publishes test reports
 - Available at: `https://alexandervegazo26.github.io/pet-store-api-test/api-test-automation/report/`
 
 ### Performance Testing Workflow
 
-- Can be triggered manually or on push
+- Automatically runs on push to main branch (if related changes where affected)
+- Automatically runs on push to main branch
+- Can be triggered manually from actions tab in github
 - Executes performance simulations
 - Generates and publishes performance reports
 - Available at: `https://alexandervegazo26.github.io/pet-store-api-test/api-test-performance/`
